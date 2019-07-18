@@ -10,7 +10,7 @@ while True:
     elif cmd in {"quit", "exit", "end"}:
         break
     elif cmd in {"ff"}:
-        r = gauss.magnetic_field_fetch()
+        r = gauss.magnetic_field_fetch
         print(r)
     elif cmd in {"query"}:
         query = input("####")

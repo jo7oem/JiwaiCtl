@@ -5,7 +5,7 @@ class GaussMeter:
     def __init__(self):
         self.__gs = visa.ResourceManager().open_resource("ASRL3::INSTR")  # linux "ASRL/dev/ttyUSB0::INSTR"
 
-    def __query(self, command: str) -> None:
+    def __query(self, command: str) -> str:
         res = self.__gs.query(command)
         res.translate(str.maketrans('', '', ' \r\n'))
         return res
@@ -23,9 +23,9 @@ class GaussMeter:
         res = self.__query("FIELD?")
         multiplier = self.__query("FIELDM?")
         if multiplier == "m":
-            res = res * 10 ** (-3)
+            res = float(res) * 10 ** (-3)
         elif multiplier == "k":
-            res = res * 1000
+            res = float(res) * 1000
         else:
             pass
 
