@@ -49,3 +49,6 @@ class GaussMeter:
             range_index = 0
         self.__write("RANGE " + str(range_index))
         return
+
+    def range_fetch(self) -> int:
+        return int(self.__query("RANGE?"))
