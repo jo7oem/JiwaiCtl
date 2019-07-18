@@ -1,6 +1,6 @@
 import machines_controller.gauss_ctl as visa_gs
 
-gauss = visa_gs.GaussMeter
+gauss = visa_gs.GaussMeter()
 
 while True:
 
