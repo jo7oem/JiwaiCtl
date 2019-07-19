@@ -52,3 +52,4 @@ class GaussMeter:
 
     def range_fetch(self) -> int:
         return int(self.__query("RANGE?"))
+
