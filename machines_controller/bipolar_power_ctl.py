@@ -12,3 +12,8 @@ class BipolarPower:
 
     def __write(self, command: str) -> None:
         self.__gs.write(command)
+
+    def check_allow_output(self) -> bool:
+        if self.__query("OUT?") == 'OUT 001\r\n':
+            return True
+        return False
