@@ -89,6 +89,10 @@ class BipolarPower:
             self.__write("OUT 0")
         return
 
+    def vout_fetch(self):
+        volt, _ = self.__query("VOUT?").split(" ")
+        return float(volt)
+
     def iout_fetch(self):
         current, unit = self.__query("IOUT?").split(" ")
         return Current(current=current, unit=unit)
