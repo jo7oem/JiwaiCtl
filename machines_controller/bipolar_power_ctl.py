@@ -1,10 +1,12 @@
+import time
 import typing
 
 import visa
 
 
 class Current(object):
-    def __init__(self, current: typing.SupportsFloat, unit: str):
+    def __init__(self, current: typing.SupportsFloat = 0, unit: str = "mA"):
+
         if unit in ["mA", "ma", "MA", "Ma"]:
             self.__current = round(float(current))
         elif unit in ["A", "a"]:
@@ -19,13 +21,13 @@ class Current(object):
         return float(self.__current) / 1000.0
 
     def __add__(self, other):
-        return self.__current + int(other)
+        return Current(current=self.mA() + int(other), unit="mA")
 
     def __sub__(self, other):
-        return self.__add__(-int(other))
+        return Current(current=self.mA() - int(other), unit="mA")
 
     def __mul__(self, other):
-        return self.__current * other
+        return Current(current=round(self.mA() * float(other)), unit="mA")
 
     def __int__(self):
         return self.mA()
@@ -36,11 +38,36 @@ class Current(object):
     def set_A(self, current: float):
         self.__current = float(current) * 1000
 
+    def __str__(self) -> str:
+        if abs(self.__current) >= 1000:
+            return str(self.A()) + " A"
+        else:
+            return str(self.mA()) + " mA"
+
+    def __lt__(self, other):
+        return self.mA() < int(other)
+
+    def __gt__(self, other):
+        return self.mA() > int(other)
+
+    def __le__(self, other):
+        return self.mA() <= int(other)
+
+    def __ge__(self, other):
+        return self.mA() >= int(other)
+
+    def __eq__(self, other):
+        return self.mA() == int(other)
+
+    def __abs__(self):
+        return abs(self.mA())
 
 
 class BipolarPower:
     def __init__(self):
         self.__gs = visa.ResourceManager().open_resource("GPIB0::4::INSTR")  # linux "ASRL/dev/ttyUSB0::INSTR"
+        self.CURRENT_CHANGE_LIMIT = Current(500, "mA")
+        self.CURRENT_CHANGE_DELAY = 0.5
 
     def __query(self, command: str) -> str:
         res = self.__gs.query(command)
@@ -63,24 +90,46 @@ class BipolarPower:
         return
 
     def iout_fetch(self):
+        current, unit = self.__query("IOUT?").split(" ")
+        return Current(current=current, unit=unit)
+
+    def iset_fetch(self):
         current, unit = self.__query("ISET?").split(" ")
+        return Current(current=current, unit=unit)
+
+    def __set_iout(self, current):
+        self.__query(str(current))
+
+    def set_iout(self, current):
+        now_iout = self.iout_fetch()
+        if now_iout == current:
+            return
+        if current.mA() - now_iout.mA() > 0:
+            current_list = range(now_iout.mA(), current.mA(), self.CURRENT_CHANGE_LIMIT.mA())
+        else:
+            current_list = range(now_iout.mA(), current.mA(), -self.CURRENT_CHANGE_LIMIT.mA())
+        for i in current_list:
+            self.__set_iout(Current(i, "mA"))
+            time.sleep(self.CURRENT_CHANGE_DELAY)
+        self.__set_iout(current)
+        time.sleep(self.CURRENT_CHANGE_DELAY)
 
     def allow_output(self, operation: bool):
         now_output = self.check_allow_output()
         if now_output == operation:
             return
-        iset = FetchIset()
+        iset = self.iset_fetch()
         if iset != 0:
             if not now_output:
-                SetIset(0)
+                self.__set_iout(Current(0, "mA"))
             else:
-                ctl_iout_ma(0)
+                self.set_iout(Current(0, "mA"))
         time.sleep(0.1)
         if operation:
-            power.write("OUT 1")
+            self.__write("OUT 1")
         else:
-            power.write("OUT 0")
+            self.__write("OUT 0")
         time.sleep(0.1)
-        if CanOutput() == operation:
+        if self.check_allow_output() == operation:
             return
-        raise ControlError("バイポーラ電源出力制御失敗")
+        raise OSError
