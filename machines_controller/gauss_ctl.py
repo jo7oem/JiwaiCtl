@@ -7,8 +7,7 @@ class GaussMeter:
 
     def __query(self, command: str) -> str:
         res = self.__gs.query(command)
-        res.translate(str.maketrans('', '', ' \r\n'))
-        return res
+        return res.strip("\r\n")
 
     def __write(self, command: str) -> None:
         self.__gs.write(command)
@@ -20,7 +19,7 @@ class GaussMeter:
         :rtype int
         """
 
-        res = self.__query("FIELD?")
+        res = float(self.__query("FIELD?"))
         multiplier = self.__query("FIELDM?")
         if multiplier == "m":
             res = float(res) * 10 ** (-3)
