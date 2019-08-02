@@ -1,6 +1,5 @@
 import time
 import typing
-
 import visa
 
 
@@ -71,14 +70,14 @@ class BipolarPower:
 
     def __query(self, command: str) -> str:
         res = self.__gs.query(command)
-        res.translate(str.maketrans('', '', '\r\n'))
+        _, res = res.split()
         return res
 
     def __write(self, command: str) -> None:
         self.__gs.write(command)
 
     def check_allow_output(self) -> bool:
-        if self.__query("OUT?") == 'OUT 001\r\n':
+        if int(self.__query("OUT?")) == 1:
             return True
         return False
 
@@ -90,19 +89,19 @@ class BipolarPower:
         return
 
     def vout_fetch(self):
-        volt, _ = self.__query("VOUT?").split(" ")
+        volt, _ = self.__query("VOUT?").rstrip("V")
         return float(volt)
 
     def iout_fetch(self):
-        current, unit = self.__query("IOUT?").split(" ")
-        return Current(current=current, unit=unit)
+        current = float(self.__query("IOUT?").rstrip("A"))
+        return Current(current=current, unit="A")
 
     def iset_fetch(self):
-        current, unit = self.__query("ISET?").split(" ")
-        return Current(current=current, unit=unit)
+        current = float(self.__query("ISET?").rstrip("A"))
+        return Current(current=current, unit="A")
 
     def __set_iout(self, current):
-        self.__query(str(current))
+        self.__write("ISET " + str(current))
 
     def set_iout(self, current):
         now_iout = self.iout_fetch()
