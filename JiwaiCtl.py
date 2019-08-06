@@ -18,7 +18,7 @@ class StatusList:
     diff_second = 0
 
     def __str__(self):
-        return "{:03} sec ISET= {:+.3f} IOUT= {:+.3f} Field= {:+.1f}\tVOUT= {:+.3f} ".format(
+        return "{:03} sec ISET= {:+.3f} A\tIOUT= {:+.3f}A\tField= {:+.1f} G\tVOUT= {:+.3f} ".format(
             self.diff_second, self.iset, self.iout,
             self.field, self.vout)
 
@@ -39,9 +39,9 @@ def loadStatus(iout=True, iset=True, vout=True, field=True) -> StatusList:
     """
     result = StatusList()
     if iout:
-        result.iout = power.iout_fetch()
+        result.iout = power.iout_fetch().A()
     if iset:
-        result.iset = power.iset_fetch()
+        result.iset = power.iset_fetch().A()
     if vout:
         result.vout = power.vout_fetch()
     if field:
