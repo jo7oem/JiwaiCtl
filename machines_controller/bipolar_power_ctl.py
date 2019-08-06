@@ -100,10 +100,10 @@ class BipolarPower:
         current = float(self.__query("ISET?").rstrip("A"))
         return Current(current=current, unit="A")
 
-    def __set_iout(self, current):
+    def __set_iset(self, current):
         self.__write("ISET " + str(current))
 
-    def set_iout(self, current):
+    def set_iset(self, current):
         now_iout = self.iout_fetch()
         if now_iout == current:
             return
@@ -112,21 +112,21 @@ class BipolarPower:
         else:
             current_list = range(now_iout.mA(), current.mA(), -self.CURRENT_CHANGE_LIMIT.mA())
         for i in current_list:
-            self.__set_iout(Current(i, "mA"))
+            self.__set_iset(Current(i, "mA"))
             time.sleep(self.CURRENT_CHANGE_DELAY)
-        self.__set_iout(current)
+        self.__set_iset(current)
         time.sleep(self.CURRENT_CHANGE_DELAY)
 
-    def allow_output(self, operation: bool):
+    def allow_output(self, operation: bool) -> None:
         now_output = self.check_allow_output()
         if now_output == operation:
             return
         iset = self.iset_fetch()
         if iset != 0:
             if not now_output:
-                self.__set_iout(Current(0, "mA"))
+                self.__set_iset(Current(0, "mA"))
             else:
-                self.set_iout(Current(0, "mA"))
+                self.set_iset(Current(0, "mA"))
         time.sleep(0.1)
         if operation:
             self.__write("OUT 1")
