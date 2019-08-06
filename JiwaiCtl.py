@@ -132,10 +132,10 @@ def main():
             print_status()
             continue
         elif cmd in {"powerctl"}:
-            power_ctl(cmd[1:])
+            power_ctl(request[1:])
             continue
         elif cmd in {"gaussctl"}:
-            gauss_ctl(cmd[1:])
+            gauss_ctl(request[1:])
             continue
 
         else:
