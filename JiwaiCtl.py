@@ -189,6 +189,7 @@ if __name__ == '__main__':
                 continue
         else:
             break
+    gauss.range_set(0)
     power.allow_output(True)
     search_magnet()
     init()
