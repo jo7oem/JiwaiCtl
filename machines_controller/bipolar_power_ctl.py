@@ -89,7 +89,7 @@ class BipolarPower:
         return
 
     def vout_fetch(self):
-        volt, _ = self.__query("VOUT?").rstrip("V")
+        volt = self.__query("VOUT?").rstrip("V")
         return float(volt)
 
     def iout_fetch(self):
