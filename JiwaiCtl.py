@@ -148,6 +148,7 @@ def search_magnet():
     time.sleep(0.2)
     if power.vout_fetch() / power.iout_fetch().A() > 4:
         print("Support Magnet Field is +-4kOe")
+        power.CURRENT_CHANGE_LIMIT = Current(300, "mA")
         return
     else:
         print("Support Magnet Field is +-200Oe")
