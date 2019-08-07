@@ -1,4 +1,5 @@
 import visa
+import time
 
 
 class GaussMeter:
@@ -47,6 +48,7 @@ class GaussMeter:
         if range_index < 0 or range_index > 3:
             range_index = 0
         self.__write("RANGE " + str(range_index))
+        time.sleep(0.2)
         return
 
     def range_fetch(self) -> int:
