@@ -53,11 +53,11 @@ def load_status(iout=True, iset=True, vout=True, field=True) -> StatusList:
 
 def magnet_field_ctl(target: int, auto_range=False):
     global CONNECT_MAGNET
-    
+
     next_range = 0
     if CONNECT_MAGNET == "ELMG":
         now_range = gauss.range_fetch()
-        elmg_const=1.0
+        elmg_const = 1.0
         if auto_range:
             if abs(target) >= 2500:
                 next_range = 0
@@ -66,13 +66,13 @@ def magnet_field_ctl(target: int, auto_range=False):
             else:
                 next_range = 2
             if now_range == next_range:
-                auto_range=False
+                auto_range = False
                 pass
             elif now_range < next_range:
                 pass
             else:
                 gauss.range_set(next_range)
-                now_range=next_range
+                now_range = next_range
                 auto_range = False
         now_field = gauss.magnetic_field_fetch()
         diff_field = target - now_field
@@ -84,43 +84,43 @@ def magnet_field_ctl(target: int, auto_range=False):
 
         while (is_diff_field_up and diff_field >= 2) or (not is_diff_field_up and diff_field <= -2):
             looplimit -= 1
-            elmg_const=1-0.15*now_range
+            elmg_const = 1 - 0.15 * now_range
             now_current = power.iset_fetch()
-            next_current = Current(now_current.mA() + (diff_field) * elmg_const,"mA")
-            if now_current==next_current:
+            next_current = Current(now_current.mA() + (diff_field) * elmg_const, "mA")
+            if now_current == next_current:
                 return
-            
+
             power.set_iset(next_current)
             time.sleep(0.2)
             now_field = gauss.magnetic_field_fetch()
-            
+
             if looplimit == 0:
                 return
             if auto_range:
-                if abs(now_field)>=3000 and next_range==0:
+                if abs(now_field) >= 3000 and next_range == 0:
                     pass
-                elif abs(now_field)>=300 and next_range>=1:
+                elif abs(now_field) >= 300 and next_range >= 1:
                     gauss.range_set(1)
-                    now_range=1
+                    now_range = 1
                     now_field = gauss.magnetic_field_fetch()
-                    if next_range==1:
-                        auto_range=False
-                    
-                elif abs(now_field)<300 and next_range==2:
+                    if next_range == 1:
+                        auto_range = False
+
+                elif abs(now_field) < 300 and next_range == 2:
                     gauss.range_set(2)
-                    now_range=2
+                    now_range = 2
                     now_field = gauss.magnetic_field_fetch()
-                    auto_range=False
-                    
+                    auto_range = False
+
                 else:
                     pass
-                
+
             while True:
                 time.sleep(0.1)
-                palfield=gauss.magnetic_field_fetch()
-                if palfield==now_field:
+                palfield = gauss.magnetic_field_fetch()
+                if palfield == now_field:
                     break
-                now_field=palfield
+                now_field = palfield
                 time.sleep(0.1)
             diff_field = target - now_field
             continue
@@ -207,11 +207,11 @@ def gauss_ctl(cmd):
 
 
 def Oe_ctl(cmd, auto_range):
-    if len(cmd)==0:
+    if len(cmd) == 0:
         return
     target = cmd[0]
     unit = ""
-    if len(cmd)>=2:
+    if len(cmd) >= 2:
         unit = cmd[1]
     try:
         if unit == "k":
