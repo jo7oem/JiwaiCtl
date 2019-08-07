@@ -9,6 +9,8 @@ import machines_controller.gauss_ctl as visa_gs
 from machines_controller.bipolar_power_ctl import Current
 
 HELM_Oe2CURRENT_CONST = 20.960 / 1000  # ヘルムホルツコイル用磁界電流変換係数 mA換算用
+HELM_MANGET_FIELD_LIMIT = 150
+ELMG_MAGNET_FIELD_LIMIT = 4150
 
 
 class StatusList:
@@ -52,12 +54,13 @@ def load_status(iout=True, iset=True, vout=True, field=True) -> StatusList:
 
 
 def magnet_field_ctl(target: int, auto_range=False):
-    global CONNECT_MAGNET
-
     next_range = 0
     if CONNECT_MAGNET == "ELMG":
+        if target > ELMG_MAGNET_FIELD_LIMIT:
+            print("[Error]\t磁界制御入力値過大")
+            print("最大磁界4.1kOe")
+            raise ValueError
         now_range = gauss.range_fetch()
-        elmg_const = 1.0
         if auto_range:
             if abs(target) >= 2500:
                 next_range = 0
@@ -126,7 +129,10 @@ def magnet_field_ctl(target: int, auto_range=False):
             continue
         return
     elif CONNECT_MAGNET == "HELM":
-        global HELM_Oe2CURRENT_CONST
+        if target > ELMG_MAGNET_FIELD_LIMIT:
+            print("[Error]\t磁界制御入力値過大")
+            print("最大磁界4.1kOe")
+            raise ValueError
         if not target <= 110:
             target = 100
         target_current = Current(int(target / HELM_Oe2CURRENT_CONST), "mA")
