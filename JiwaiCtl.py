@@ -175,9 +175,11 @@ def gauss_ctl(cmd):
 
 
 def Oe_ctl(cmd, auto_range):
+    if len(cmd)==0:
+        return
     target = cmd[0]
     unit = ""
-    if cmd[1]:
+    if len(cmd)>=2:
         unit = cmd[1]
     try:
         if unit == "k":
