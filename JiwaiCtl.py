@@ -266,6 +266,35 @@ def search_magnet():
     time.sleep(0.2)
     resistance = power.vout_fetch() / power.iout_fetch().A()
     if resistance > 4:
+        now = "ELMG"
+    else:
+        now = "HELM"
+    power.allow_output(False)
+    while True:
+        print("接続先を入力してください。"
+              "電磁石=>\"ELMG\"\tヘルムホルツ=>\"HELM\"")
+        answer = input(">>>")
+        if answer == now:
+            break
+        elif answer == "Force":
+            print("強制接続先を入力してください。"
+                  "電磁石=>\"ELMG\"\tヘルムホルツ=>\"HELM\"")
+            force = input("###")
+            if force == "ELMG":
+                now = "ELMG"
+                break
+            elif force == "HELM":
+                now = "HELM"
+                break
+            else:
+                continue
+        elif answer == "":
+            continue
+        else:
+            print("接続先が不一致か入力内容が不正です。"
+                  "接続先を強制するには\"Force\"と入力してください")
+    power.allow_output(True)
+    if now == "ELMG":
         print("Support Magnet Field is +-4kOe")
         power.CURRENT_CHANGE_LIMIT = Current(250, "mA")
         CONNECT_MAGNET = "ELMG"
