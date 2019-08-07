@@ -174,7 +174,25 @@ def gauss_ctl(cmd):
         return
 
 
+def Oe_ctl(cmd, auto_range):
+    target = cmd[0]
+    unit = ""
+    if cmd[1]:
+        unit = cmd[1]
+    try:
+        if unit == "k":
+            target = int(float(target) * 1000)
+        else:
+            target = int(target)
+    except ValueError:
+        print("ValeError!")
+        return
+    magnet_field_ctl(target, auto_range=auto_range)
+    return
+
+
 def main():
+    auto_range = False
     while True:
         request = input(">>>").lower().split(" ")
         cmd = request[0]
@@ -192,6 +210,12 @@ def main():
         elif cmd in {"gaussctl"}:
             gauss_ctl(request[1:])
             continue
+        elif cmd in {"oectl"}:
+            Oe_ctl(request[1:], auto_range)
+            continue
+        elif cmd in {"autorange"}:
+            auto_range = not auto_range
+            print("Auto Range is " + str(auto_range))
 
         else:
             print("""invaild command\nPlease type "h" or "help" """)
