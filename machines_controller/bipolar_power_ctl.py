@@ -1,5 +1,6 @@
 import time
 import typing
+
 import visa
 
 
@@ -67,6 +68,7 @@ class BipolarPower:
         self.__gs = visa.ResourceManager().open_resource("GPIB0::4::INSTR")  # linux "ASRL/dev/ttyUSB0::INSTR"
         self.CURRENT_CHANGE_LIMIT = Current(500, "mA")
         self.CURRENT_CHANGE_DELAY = 0.5
+        self.MAGNET_RESISTOR = 10  # ohm
 
     def __query(self, command: str) -> str:
         res = self.__gs.query(command)
@@ -104,6 +106,10 @@ class BipolarPower:
         self.__write("ISET " + str(current))
 
     def set_iset(self, current):
+        if abs() >= 10000 or current.A * self.MAGNET_RESISTOR >= 10:
+            print("[Error]\t電源過負荷")
+            raise ValueError
+
         now_iout = self.iout_fetch()
         if now_iout == current:
             return
