@@ -133,8 +133,6 @@ def magnet_field_ctl(target: int, auto_range=False):
             print("[Error]\t磁界制御入力値過大")
             print("最大磁界4.1kOe")
             raise ValueError
-        if not target <= 110:
-            target = 100
         target_current = Current(int(target / HELM_Oe2CURRENT_CONST), "mA")
         power.set_iset(target_current)
         return
