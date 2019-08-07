@@ -8,6 +8,8 @@ import machines_controller.bipolar_power_ctl as visa_bp
 import machines_controller.gauss_ctl as visa_gs
 from machines_controller.bipolar_power_ctl import Current
 
+HELM_Oe2CURRENT_CONST = 20.960 / 1000  # ヘルムホルツコイル用磁界電流変換係数 mA換算用
+
 
 class StatusList:
     iset = 0.0
@@ -30,7 +32,7 @@ class StatusList:
         return self.diff_second, self.iset, self.iout, self.field, self.vout
 
 
-def loadStatus(iout=True, iset=True, vout=True, field=True) -> StatusList:
+def load_status(iout=True, iset=True, vout=True, field=True) -> StatusList:
     """
     各ステータスをまとめて取得する
 
@@ -49,8 +51,61 @@ def loadStatus(iout=True, iset=True, vout=True, field=True) -> StatusList:
     return result
 
 
+def magnet_field_ctl(target: int, auto_range=False):
+    global CONNECT_MAGNET
+    next_range = 0
+    if CONNECT_MAGNET == "ELMG":
+        if auto_range:
+            now_range = gauss.range_fetch()
+            if abs(target) >= 2500:
+                next_range = 0
+            elif abs(target) >= 250:
+                next_range = 1
+            else:
+                next_range = 2
+            if now_range == next_range:
+                pass
+            elif now_range > next_range:
+                pass
+            else:
+                gauss.range_set(next_range)
+                auto_range = False
+        now_field = gauss.magnetic_field_fetch()
+        diff_field = target - now_field
+        looplimit = 5
+        if diff_field > 0:
+            is_diff_field_up = True
+        else:
+            is_diff_field_up = False
+
+        while (is_diff_field_up and diff_field >= 0) or (not is_diff_field_up and diff_field <= 0):
+            looplimit -= 1
+            now_current = power.iset_fetch()
+            next_current = Current(now_current.mA() + (diff_field) * 1)
+            power.set_iset(next_current)
+            time.sleep(0.2)
+            now_field = gauss.magnetic_field_fetch()
+            diff_field = target - now_field
+            if looplimit == 0:
+                break
+            if auto_range:
+                gauss.range_set(next_range)
+                auto_range = False
+            continue
+        return
+    elif CONNECT_MAGNET == "HELM":
+        global HELM_Oe2CURRENT_CONST
+        if not target <= 110:
+            target = 100
+        target_current = Current(int(target / HELM_Oe2CURRENT_CONST), "mA")
+        power.set_iset(target_current)
+        return
+    else:
+        raise ValueError
+
+
 def print_status():
-    print(loadStatus())
+    print(load_status())
     return
 
 
@@ -144,15 +199,18 @@ def main():
 
 
 def search_magnet():
+    global CONNECT_MAGNET
     power.set_iset(Current(200, "mA"))
     time.sleep(0.2)
     if power.vout_fetch() / power.iout_fetch().A() > 4:
         print("Support Magnet Field is +-4kOe")
         power.CURRENT_CHANGE_LIMIT = Current(300, "mA")
+        CONNECT_MAGNET = "ELMG"
         return
     else:
         print("Support Magnet Field is +-200Oe")
         power.CURRENT_CHANGE_DELAY = 0.3
+        CONNECT_MAGNET = "HELM"
         return
 
 
@@ -160,6 +218,8 @@ def init():
     gauss.range_set(0)
     power.set_iset(Current(0, "mA"))
 
+
+CONNECT_MAGNET = ""
 
 if __name__ == '__main__':
     while True:
