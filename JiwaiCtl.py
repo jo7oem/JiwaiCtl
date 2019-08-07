@@ -129,9 +129,9 @@ def magnet_field_ctl(target: int, auto_range=False):
             continue
         return
     elif CONNECT_MAGNET == "HELM":
-        if target > ELMG_MAGNET_FIELD_LIMIT:
+        if target > HELM_MANGET_FIELD_LIMIT:
             print("[Error]\t磁界制御入力値過大")
-            print("最大磁界4.1kOe")
+            print("最大磁界200Oe")
             raise ValueError
         target_current = Current(int(target / HELM_Oe2CURRENT_CONST), "mA")
         power.set_iset(target_current)
@@ -269,13 +269,17 @@ def search_magnet():
         print("Support Magnet Field is +-4kOe")
         power.CURRENT_CHANGE_LIMIT = Current(250, "mA")
         CONNECT_MAGNET = "ELMG"
-        power.MAGNET_RESISTANCE = resistance * 1.05
+        power.set_iset(Current(500, "mA"))
+        resistance = power.vout_fetch() / power.iout_fetch().A()
+        power.MAGNET_RESISTANCE = resistance
         return
     else:
         print("Support Magnet Field is +-200Oe")
         power.CURRENT_CHANGE_DELAY = 0.3
         CONNECT_MAGNET = "HELM"
-        power.MAGNET_RESISTANCE = resistance * 1.1
+        power.set_iset(Current(500, "mA"))
+        resistance = power.vout_fetch() / power.iout_fetch().A()
+        power.MAGNET_RESISTANCE = resistance
         return
 
 
