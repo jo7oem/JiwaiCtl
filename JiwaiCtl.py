@@ -80,6 +80,7 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
             else:
                 gauss.range_set(next_range)
                 now_range = next_range
+                time.sleep(0.5)
                 auto_range = False
         now_field = gauss.magnetic_field_fetch()
         diff_field = target - now_field
@@ -91,12 +92,11 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
 
         while (is_diff_field_up and diff_field >= 2) or (not is_diff_field_up and diff_field <= -2):
             looplimit -= 1
-            elmg_const = 1 - 0.15 * now_range
+            elmg_const = 1.0 - 0.12 * now_range
             now_current = power.iset_fetch()
             next_current = Current(now_current.mA() + (diff_field) * elmg_const, "mA")
             if now_current == next_current:
                 return next_current
-
             power.set_iset(next_current)
             time.sleep(0.2)
             now_field = gauss.magnetic_field_fetch()
@@ -209,7 +209,7 @@ def mesure_process(mesure_setting, mesure_seq, start_time, save_file=None):
         status = load_status()
         status.set_origine_time(start_time)
         print(status)
-        if save_file is not None:
+        if save_file :
             save_status(save_file, status)
         time.sleep(post_lock_time)
     return
@@ -247,6 +247,7 @@ def mesure_test():
     print("測定設定は検証されました。")
     global MESURE_SEQUENCE_VERIFY
     MESURE_SEQUENCE_VERIFY = True
+    power.set_iset(Current(0, "mA"))
     return
 
 
@@ -263,6 +264,7 @@ def mesure():
         file = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".log"
         start_time = gen_csv_header(file)
         mesure_process(operation, seq, start_time)
+    power.set_iset(Current(0, "mA"))
 
 
 def power_ctl(cmd):
