@@ -53,7 +53,7 @@ def load_status(iout=True, iset=True, vout=True, field=True) -> StatusList:
     return result
 
 
-def magnet_field_ctl(target: int, auto_range=False):
+def magnet_field_ctl(target: int, auto_range=False) -> Current:
     next_range = 0
     if CONNECT_MAGNET == "ELMG":
         if target > ELMG_MAGNET_FIELD_LIMIT:
@@ -91,14 +91,14 @@ def magnet_field_ctl(target: int, auto_range=False):
             now_current = power.iset_fetch()
             next_current = Current(now_current.mA() + (diff_field) * elmg_const, "mA")
             if now_current == next_current:
-                return
+                return next_current
 
             power.set_iset(next_current)
             time.sleep(0.2)
             now_field = gauss.magnetic_field_fetch()
 
             if looplimit == 0:
-                return
+                return next_current
             if auto_range:
                 if abs(now_field) >= 3000 and next_range == 0:
                     pass
@@ -127,7 +127,7 @@ def magnet_field_ctl(target: int, auto_range=False):
                 time.sleep(0.1)
             diff_field = target - now_field
             continue
-        return
+
     elif CONNECT_MAGNET == "HELM":
         if target > HELM_MANGET_FIELD_LIMIT:
             print("[Error]\t磁界制御入力値過大")
@@ -135,7 +135,7 @@ def magnet_field_ctl(target: int, auto_range=False):
             raise ValueError
         target_current = Current(int(target / HELM_Oe2CURRENT_CONST), "mA")
         power.set_iset(target_current)
-        return
+        return target_current
     else:
         raise ValueError
 
@@ -226,6 +226,25 @@ def Oe_ctl(cmd, auto_range):
         print("ValeError!")
         return
     magnet_field_ctl(target, auto_range=auto_range)
+    return
+
+
+def demag(step: int = 10):
+    if CONNECT_MAGNET == "ELMG":
+        max_current = magnet_field_ctl(4000, True)
+    elif CONNECT_MAGNET == "HELM":
+        max_current = magnet_field_ctl(100, True)
+    else:
+        raise ValueError
+
+    diff_current = int(max_current.mA() / step)
+    current_seq = range(max_current.mA(), 0, -diff_current)
+    flag = 1
+    for i in current_seq:
+        flag = flag * -1
+        power.set_iset(Current(flag * i, "mA"))
+        time.sleep(0.5)
+    power.set_iset(Current(0, "mA"))
     return
 
 
