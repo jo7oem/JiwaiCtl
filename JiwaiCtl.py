@@ -127,7 +127,7 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
                 time.sleep(0.1)
             diff_field = target - now_field
             continue
-
+        return next_current
     elif CONNECT_MAGNET == "HELM":
         if target > HELM_MANGET_FIELD_LIMIT:
             print("[Error]\t磁界制御入力値過大")
@@ -229,16 +229,15 @@ def Oe_ctl(cmd, auto_range):
     return
 
 
-def demag(step: int = 10):
+def demag(step: int = 15):
     if CONNECT_MAGNET == "ELMG":
         max_current = magnet_field_ctl(4000, True)
     elif CONNECT_MAGNET == "HELM":
         max_current = magnet_field_ctl(100, True)
     else:
         raise ValueError
-
-    diff_current = int(max_current.mA() / step)
-    current_seq = range(max_current.mA(), 0, -diff_current)
+    diff_current = int(int(max_current) / step)
+    current_seq = range(int(max_current), 0, -diff_current)
     flag = 1
     for i in current_seq:
         flag = flag * -1
@@ -250,7 +249,7 @@ def demag(step: int = 10):
 
 def demag_cmd(cmd):
     if len(cmd) == 0:
-        step = 10
+        step = 15
     else:
         try:
             step = int(cmd[0])
@@ -337,8 +336,7 @@ def search_magnet():
         power.CURRENT_CHANGE_LIMIT = Current(200, "mA")
         CONNECT_MAGNET = "ELMG"
         power.set_iset(Current(500, "mA"))
-        resistance = power.vout_fetch() / power.iout_fetch().A()
-        power.MAGNET_RESISTANCE = resistance
+        power.MAGNET_RESISTANCE = 8.9
         return
     else:
         print("Support Magnet Field is +-200Oe")
