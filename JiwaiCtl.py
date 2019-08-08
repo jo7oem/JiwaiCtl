@@ -248,6 +248,21 @@ def demag(step: int = 10):
     return
 
 
+def demag_cmd(cmd):
+    if len(cmd) == 0:
+        step = 10
+    else:
+        try:
+            step = int(cmd[0])
+        except ValueError:
+            print("step数の指定が不正です。")
+            return
+    print("消磁開始")
+    demag(step)
+    print("消磁終了")
+    return
+
+
 def main():
     auto_range = False
     while True:
@@ -273,6 +288,10 @@ def main():
         elif cmd in {"autorange"}:
             auto_range = not auto_range
             print("Auto Range is " + str(auto_range))
+
+        elif cmd in {"demag"}:
+            demag_cmd(request[1:])
+            continue
 
         else:
             print("""invaild command\nPlease type "h" or "help" """)
