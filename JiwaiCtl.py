@@ -407,6 +407,15 @@ def main():
         elif cmd in {"demag"}:
             demag_cmd(request[1:])
             continue
+        elif cmd in {"load"}:
+            load_mesure_sequence(request[1])
+            continue
+        elif cmd in {"test"}:
+            mesure_test()
+            continue
+        elif cmd in {"mesure"}:
+            mesure()
+            continue
 
         else:
             print("""invaild command\nPlease type "h" or "help" """)
