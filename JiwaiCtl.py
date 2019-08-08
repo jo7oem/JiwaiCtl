@@ -1,4 +1,6 @@
+import csv
 import datetime
+import json
 import sys
 import time
 
@@ -11,6 +13,8 @@ from machines_controller.bipolar_power_ctl import Current
 HELM_Oe2CURRENT_CONST = 20.960 / 1000  # ヘルムホルツコイル用磁界電流変換係数 mA換算用
 HELM_MANGET_FIELD_LIMIT = 150
 ELMG_MAGNET_FIELD_LIMIT = 4150
+MESURE_SEQUENCE = {}
+MESURE_SEQUENCE_VERIFY = False
 
 
 class StatusList:
@@ -147,6 +151,118 @@ def print_status():
 
 def cmdlist():
     print("comandlist thi is mock")
+
+
+def load_mesure_sequence(filename: str):
+    with open("./mesure_sequence/" + filename, "r") as f:
+        seq = json.load(f)
+    global MESURE_SEQUENCE
+    global MESURE_SEQUENCE_VERIFY
+    MESURE_SEQUENCE = seq
+    MESURE_SEQUENCE_VERIFY = False
+    return
+
+
+def gen_csv_header(filename) -> datetime:
+    print("測定条件等メモ記入欄")
+    memo = input("memo :")
+    start_time = datetime.datetime.now()
+    with open(filename, mode='a', encoding="utf-8")as f:
+        writer = csv.writer(f, lineterminator='\n')
+        writer.writerow(["開始時刻", start_time.strftime('%Y-%m-%d_%H-%M-%S')])
+        writer.writerow(["memo", memo])
+        writer.writerow(["#####"])
+        writer.writerow(["経過時間[sec]", "設定電流:ISET[A]", "出力電流:IOUT[A]", "磁界:H[Gauss]", "出力電圧:VOUT[V]", "IFINE"])
+    return start_time
+
+
+def save_status(filename: str, status: StatusList) -> None:
+    """
+    ファイルにステータスを追記する
+
+    --------
+    :type status: dict{"iset":float,"iout":float,"ifield"}
+    :param filename: 書き込むファイル名
+    :param status: 書き込むデー   タ
+    :return:
+    """
+    result = status.out_tuple()
+
+    with open(filename, mode='a', encoding="utf-8")as f:
+        writer = csv.writer(f, lineterminator='\n')
+        writer.writerow(result)
+    return
+
+
+def mesure_process(mesure_setting, mesure_seq, start_time, save_file=None):
+    pre_lock_time = mesure_setting["pre_lock_sec"]
+    post_lock_time = mesure_setting["post_lock_sec"]
+    for target in mesure_seq:
+        if mesure_setting["control"] == "current":
+            power.set_iset(Current(target, "mA"))
+        elif mesure_setting["control"] == "oectl":
+            magnet_field_ctl(target, True)
+        else:
+            print(mesure_setting["control"], "は不正な値")
+            raise ValueError
+        time.sleep(pre_lock_time)
+        status = load_status()
+        status.set_origine_time(start_time)
+        print(status)
+        if save_file is not None:
+            save_status(save_file, status)
+        time.sleep(post_lock_time)
+    return
+
+
+def get_time_str() -> str:
+    """
+    現時刻を日本語に整形した文字列を返す
+    ------------------------------
+    :rtype: str
+    :return: '2018-09-08 20:55:07'
+    """
+    return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+
+def mesure_test():
+    operation = MESURE_SEQUENCE
+    if "connect_to" not in operation:
+        return
+    if operation["connect_to"] != CONNECT_MAGNET:
+        print("設定ファイルの種別が不一致")
+        return
+    if operation["demag"]:
+        print("消磁中")
+        demag()
+        print("消磁完了")
+    for seq in operation["seq"]:
+        start_time = datetime.datetime.now()
+        print("測定開始:", start_time.strftime('%Y-%m-%d %H:%M:%S'))
+        try:
+            mesure_process(operation, seq, start_time)
+        except ValueError:
+            print("測定値指定が不正です")
+            return
+    print("測定設定は検証されました。")
+    global MESURE_SEQUENCE_VERIFY
+    MESURE_SEQUENCE_VERIFY = True
+    return
+
+
+def mesure():
+    if not MESURE_SEQUENCE_VERIFY:
+        print("設定ファイルの検証を行ってください。")
+        return
+    operation = MESURE_SEQUENCE
+    if operation["demag"]:
+        print("消磁中")
+        demag()
+        print("消磁完了")
+    for seq in operation["seq"]:
+        file = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".log"
+        start_time = gen_csv_header(file)
+        mesure_process(operation, seq, start_time)
 
 
 def power_ctl(cmd):

@@ -2,7 +2,6 @@
   "connect_to": "ELMG",
   "demag": true,
   "control": "current",
-  "block_len": 1,
   "pre_lock_sec": 1.5,
   "post_lock_sec": 1.5,
   "seq": [
