@@ -266,7 +266,7 @@ def demag_cmd(cmd):
 def main():
     auto_range = False
     while True:
-        request = input(">>>").lower().split(" ")
+        request = input(">>>").lstrip(" ").lower().split(" ")
         cmd = request[0]
         if cmd in {"h", "help", "c", "cmd", "command"}:
             cmdlist()
