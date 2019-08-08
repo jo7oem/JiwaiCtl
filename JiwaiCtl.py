@@ -315,7 +315,7 @@ def search_magnet():
     power.allow_output(True)
     if now == "ELMG":
         print("Support Magnet Field is +-4kOe")
-        power.CURRENT_CHANGE_LIMIT = Current(250, "mA")
+        power.CURRENT_CHANGE_LIMIT = Current(200, "mA")
         CONNECT_MAGNET = "ELMG"
         power.set_iset(Current(500, "mA"))
         resistance = power.vout_fetch() / power.iout_fetch().A()
