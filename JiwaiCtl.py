@@ -127,7 +127,7 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
                 time.sleep(0.1)
             diff_field = target - now_field
             continue
-        return next_current
+        return power.iset_fetch()
     elif CONNECT_MAGNET == "HELM":
         if target > HELM_MANGET_FIELD_LIMIT:
             print("[Error]\t磁界制御入力値過大")
