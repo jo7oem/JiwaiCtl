@@ -42,6 +42,15 @@ class GaussMeter:
         return field_str
 
     def range_set(self, range_index: int) -> None:
+        """
+        レンジを切り替える
+        0:~30.00 kOe
+        1:~3.000 kOe
+        2:~300.0 Oe
+        3:~30.00 Oe
+        :param range_index:
+        :return:
+        """
         if range_index < 0 or range_index > 3:
             range_index = 0
         self.__write("RANGE " + str(range_index))
