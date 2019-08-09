@@ -134,7 +134,7 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
                     break
                 now_field = palfield
             diff_field = target - now_field
-            elmg_const = 1.0 - 0.16 *now_range
+            elmg_const = 1.0 - 0.16 * now_range
             now_current = power.iset_fetch()
             next_current = Current(now_current.mA() + (diff_field) * elmg_const, "mA")
             continue
