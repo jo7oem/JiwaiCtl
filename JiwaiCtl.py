@@ -465,13 +465,16 @@ def search_magnet():
         power.CURRENT_CHANGE_LIMIT = Current(200, "mA")
         CONNECT_MAGNET = "ELMG"
         power.set_iset(Current(500, "mA"))
-        power.MAGNET_RESISTANCE = 8.9
+        time.sleep(0.5)
+        resistance = power.vout_fetch() / power.iout_fetch().A()
+        power.MAGNET_RESISTANCE = resistance
         return
     else:
         print("Support Magnet Field is +-200Oe")
         power.CURRENT_CHANGE_DELAY = 0.3
         CONNECT_MAGNET = "HELM"
         power.set_iset(Current(500, "mA"))
+        time.sleep(0.2)
         resistance = power.vout_fetch() / power.iout_fetch().A()
         power.MAGNET_RESISTANCE = resistance
         return
