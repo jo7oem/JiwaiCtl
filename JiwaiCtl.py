@@ -156,8 +156,13 @@ def cmdlist():
 
 
 def load_mesure_sequence(filename: str):
-    with open("./mesure_sequence/" + filename, "r") as f:
-        seq = json.load(f)
+    try:
+        with open("./mesure_sequence/" + filename, "r") as f:
+            seq = json.load(f)
+    except json.JSONDecodeError:
+        print("設定ファイルの読み込み失敗"
+              "ファイルの存在と構造を確認してください")
+        return
     global MESURE_SEQUENCE
     global MESURE_SEQUENCE_VERIFY
     MESURE_SEQUENCE = seq
