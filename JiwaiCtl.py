@@ -183,7 +183,7 @@ def gen_csv_header(filename) -> datetime:
     return start_time
 
 
-def save_status(filename: str, status: StatusList, target=0.0) -> None:
+def save_status(filename: str, status: StatusList, target: float = 0.0) -> None:
     """
     ファイルにステータスを追記する
 
