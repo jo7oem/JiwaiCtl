@@ -98,12 +98,12 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
             elmg_const = 1.0 - 0.16 * now_range
             next_current = Current(now_current.mA() + (diff_field) * elmg_const, "mA")
 
-        while (is_diff_field_up and diff_field >= 2) or (not is_diff_field_up and diff_field <= -2):
+        while (is_diff_field_up and diff_field >= 1) or (not is_diff_field_up and diff_field <= -1):
             looplimit -= 1
             if now_current == next_current:
                 return next_current
             power.set_iset(next_current)
-            time.sleep(0.2)
+            time.sleep(0.1)
             now_field = gauss.magnetic_field_fetch()
 
             if looplimit == 0:
@@ -133,16 +133,15 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
                 if palfield == now_field:
                     break
                 now_field = palfield
-                time.sleep(0.1)
             diff_field = target - now_field
-            elmg_const = 1.0 - 0.16 * now_range
+            elmg_const = 1.0 - 0.16 *now_range
             now_current = power.iset_fetch()
             next_current = Current(now_current.mA() + (diff_field) * elmg_const, "mA")
             continue
         last_current = power.iset_fetch()
         if now_field == target:
             MAGNET_FIELD_CACHE[target] = last_current
-        elif abs(target - now_field) >= 2:
+        elif abs(target - now_field) >= 1:
             try:
                 del MAGNET_FIELD_CACHE[target]
             except KeyError:
