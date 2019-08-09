@@ -209,7 +209,7 @@ def mesure_process(mesure_setting, mesure_seq, start_time, save_file=None):
         status = load_status()
         status.set_origine_time(start_time)
         print(status)
-        if save_file :
+        if save_file:
             save_status(save_file, status)
         time.sleep(post_lock_time)
     return
