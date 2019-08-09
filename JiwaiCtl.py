@@ -15,6 +15,7 @@ HELM_MANGET_FIELD_LIMIT = 150
 ELMG_MAGNET_FIELD_LIMIT = 4150
 MESURE_SEQUENCE = {}
 MESURE_SEQUENCE_VERIFY = False
+MAGNET_FIELD_CACHE = {}
 
 
 class StatusList:
@@ -60,6 +61,7 @@ def load_status(iout=True, iset=True, vout=True, field=True) -> StatusList:
 def magnet_field_ctl(target: int, auto_range=False) -> Current:
     next_range = 0
     if CONNECT_MAGNET == "ELMG":
+        global MAGNET_FIELD_CACHE
         if target > ELMG_MAGNET_FIELD_LIMIT:
             print("[Error]\t磁界制御入力値過大")
             print("最大磁界4.1kOe")
@@ -84,17 +86,20 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
                 auto_range = False
         now_field = gauss.magnetic_field_fetch()
         diff_field = target - now_field
+        now_current = power.iset_fetch()
         looplimit = 8
         if diff_field > 0:
             is_diff_field_up = True
         else:
             is_diff_field_up = False
+        if target in MAGNET_FIELD_CACHE:
+            next_current = MAGNET_FIELD_CACHE[target]
+        else:
+            elmg_const = 1.0 - 0.12 * now_range
+            next_current = Current(now_current.mA() + (diff_field) * elmg_const, "mA")
 
         while (is_diff_field_up and diff_field >= 2) or (not is_diff_field_up and diff_field <= -2):
             looplimit -= 1
-            elmg_const = 1.0 - 0.12 * now_range
-            now_current = power.iset_fetch()
-            next_current = Current(now_current.mA() + (diff_field) * elmg_const, "mA")
             if now_current == next_current:
                 return next_current
             power.set_iset(next_current)
@@ -102,7 +107,7 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
             now_field = gauss.magnetic_field_fetch()
 
             if looplimit == 0:
-                return next_current
+                break
             if auto_range:
                 if abs(now_field) >= 3000 and next_range == 0:
                     pass
@@ -130,8 +135,22 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
                 now_field = palfield
                 time.sleep(0.1)
             diff_field = target - now_field
+            elmg_const = 1.0 - 0.12 * now_range
+            now_current = power.iset_fetch()
+            next_current = Current(now_current.mA() + (diff_field) * elmg_const, "mA")
             continue
-        return power.iset_fetch()
+        last_current = power.iset_fetch()
+        if now_field == target:
+            MAGNET_FIELD_CACHE[target] = last_current
+        elif abs(target - now_field) >= 2:
+            try:
+                del MAGNET_FIELD_CACHE[target]
+            except KeyError:
+                pass
+
+        else:
+            pass
+        return last_current
     elif CONNECT_MAGNET == "HELM":
         if target > HELM_MANGET_FIELD_LIMIT:
             print("[Error]\t磁界制御入力値過大")
