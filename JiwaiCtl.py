@@ -191,7 +191,8 @@ def save_status(filename: str, status: StatusList, target=0.0) -> None:
     :type status: dict{"iset":float,"iout":float,"ifield"}
     :param filename: 書き込むファイル名
     :param status: 書き込むデータ
-    :return:
+    :param target 目標値
+    :return: None
     """
     result = status.out_tuple()
 
