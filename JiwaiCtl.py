@@ -170,7 +170,13 @@ def load_mesure_sequence(filename: str):
     return
 
 
-def gen_csv_header(filename) -> datetime:
+def gen_csv_header(filename: str) -> datetime.datetime:
+    """
+    ログのヘッダを書き込む
+
+    :param filename:
+    :return: 基準時刻
+    """
     print("測定条件等メモ記入欄")
     memo = input("memo :")
     start_time = datetime.datetime.now()
