@@ -92,10 +92,10 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
             is_diff_field_up = True
         else:
             is_diff_field_up = False
-        if target in MAGNET_FIELD_CACHE:
+        if abs(target) > 500 and target in MAGNET_FIELD_CACHE:
             next_current = MAGNET_FIELD_CACHE[target]
         else:
-            elmg_const = 1.0 - 0.12 * now_range
+            elmg_const = 1.0 - 0.16 * now_range
             next_current = Current(now_current.mA() + (diff_field) * elmg_const, "mA")
 
         while (is_diff_field_up and diff_field >= 2) or (not is_diff_field_up and diff_field <= -2):
@@ -135,7 +135,7 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
                 now_field = palfield
                 time.sleep(0.1)
             diff_field = target - now_field
-            elmg_const = 1.0 - 0.12 * now_range
+            elmg_const = 1.0 - 0.16 * now_range
             now_current = power.iset_fetch()
             next_current = Current(now_current.mA() + (diff_field) * elmg_const, "mA")
             continue
