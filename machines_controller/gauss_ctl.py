@@ -1,5 +1,6 @@
-import visa
 import time
+
+import visa
 
 
 class GaussMeter:
@@ -13,11 +14,11 @@ class GaussMeter:
     def __write(self, command: str) -> None:
         self.__gs.write(command)
 
-    def magnetic_field_fetch(self) -> int:
-        """磁界の値を測定機器に問い合わせ,1Gauss単位で返す
+    def magnetic_field_fetch(self) -> float:
+        """磁界の値を測定機器に問い合わせ,Gauss単位で返す
 
         :return: 磁界の値(Gauss)
-        :rtype int
+        :rtype float
         """
 
         res = float(self.__query("FIELD?"))
@@ -29,7 +30,7 @@ class GaussMeter:
         else:
             pass
 
-        return round(res)
+        return res
 
     def set_query(self, command):
         w = self.__query(command)
