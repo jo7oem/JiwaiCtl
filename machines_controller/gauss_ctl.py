@@ -4,7 +4,7 @@ import visa
 
 
 class GaussMeter:
-    def __init__(self):
+    def __init__(self) -> None:
         self.__gs = visa.ResourceManager().open_resource("ASRL3::INSTR")  # linux "ASRL/dev/ttyUSB0::INSTR"
 
     def __query(self, command: str) -> str:
@@ -31,10 +31,6 @@ class GaussMeter:
             pass
 
         return res
-
-    def set_query(self, command):
-        w = self.__query(command)
-        print(w)
 
     def readable_magnetic_field_fetch(self) -> str:
         """磁界の値を測定機器に問い合わせ,人間が読みやすい形で返す
