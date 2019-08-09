@@ -263,7 +263,7 @@ def mesure():
     for seq in operation["seq"]:
         file = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".log"
         start_time = gen_csv_header(file)
-        mesure_process(operation, seq, start_time)
+        mesure_process(operation, seq, start_time, save_file=file)
     power.set_iset(Current(0, "mA"))
 
 
