@@ -106,9 +106,9 @@ class BipolarPower:
         self.__write("ISET " + str(current))
 
     def set_iset(self, current):
-        if abs(current) >= Current(10, "A") or current.A()* self.MAGNET_RESISTANCE >= 40:
+        if abs(current) >= Current(10, "A") or current.A() * self.MAGNET_RESISTANCE >= 40:
             print("[Error]\t電源過負荷")
-            print(self.MAGNET_RESISTANCE,current.A(),current.A()* self.MAGNET_RESISTANCE)
+            print(self.MAGNET_RESISTANCE, current.A(), current.A() * self.MAGNET_RESISTANCE)
             raise ValueError
 
         now_iout = self.iout_fetch()
