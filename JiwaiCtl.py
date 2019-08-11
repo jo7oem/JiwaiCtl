@@ -259,14 +259,13 @@ def mesure_test():
             print("測定値指定が不正です")
             return
     print("測定設定は検証されました。")
-    global MESURE_SEQUENCE_VERIFY
-    MESURE_SEQUENCE_VERIFY = True
+    MESURE_SEQUENCE["verified"] = True
     power.set_iset(Current(0, "mA"))
     return
 
 
 def mesure():
-    if not MESURE_SEQUENCE_VERIFY:
+    if not MESURE_SEQUENCE.get("verified", False):
         print("設定ファイルの検証を行ってください。")
         return
     operation = MESURE_SEQUENCE
@@ -275,6 +274,11 @@ def mesure():
         demag()
         print("消磁完了")
     for seq in operation["seq"]:
+        print("測定シーケンスに入ります Y/n")
+        ans = input(">>>>>").lower()
+        if ans == "n":
+            break
+
         file = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".log"
         start_time = gen_csv_header(file)
         mesure_process(operation, seq, start_time, save_file=file)
