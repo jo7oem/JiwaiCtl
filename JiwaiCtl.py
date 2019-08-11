@@ -1,6 +1,7 @@
 import csv
 import datetime
 import json
+import os
 import sys
 import time
 
@@ -167,23 +168,26 @@ def load_mesure_sequence(filename: str):
     return
 
 
-def gen_csv_header(filename: str) -> datetime.datetime:
+def gen_csv_header(filename: str) -> (str, datetime.datetime):
     """
     ログのヘッダを書き込む
 
     :param filename:
     :return: 基準時刻
     """
+    if not os.path.exists('logs'):
+        os.mkdir('logs')
+    file_path = "logs/" + filename
     print("測定条件等メモ記入欄")
     memo = input("memo :")
     start_time = datetime.datetime.now()
-    with open(filename, mode='a', encoding="utf-8")as f:
+    with open(file_path, mode='a', encoding="utf-8")as f:
         writer = csv.writer(f, lineterminator='\n')
         writer.writerow(["開始時刻", start_time.strftime('%Y-%m-%d_%H-%M-%S')])
         writer.writerow(["memo", memo])
         writer.writerow(["#####"])
         writer.writerow(["経過時間[sec]", "設定電流:ISET[A]", "出力電流:IOUT[A]", "磁界:H[Gauss]", "出力電圧:VOUT[V]", "設定値[G or I]"])
-    return start_time
+    return file_path, start_time
 
 
 def save_status(filename: str, status: StatusList, target: float = 0.0) -> None:
@@ -277,7 +281,7 @@ def mesure():
             break
 
         file = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".log"
-        start_time = gen_csv_header(file)
+        file, start_time = gen_csv_header(file)
         mesure_process(operation, seq, start_time, save_file=file)
     power.set_iset(Current(0, "mA"))
 
