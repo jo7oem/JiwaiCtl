@@ -14,7 +14,6 @@ HELM_Oe2CURRENT_CONST = 20.960 / 1000  # ヘルムホルツコイル用磁界電
 HELM_MANGET_FIELD_LIMIT = 150
 ELMG_MAGNET_FIELD_LIMIT = 4150
 MESURE_SEQUENCE = {}
-MESURE_SEQUENCE_VERIFY = False
 
 
 class StatusList:
@@ -164,9 +163,7 @@ def load_mesure_sequence(filename: str):
               "ファイルの存在と構造を確認してください")
         return
     global MESURE_SEQUENCE
-    global MESURE_SEQUENCE_VERIFY
     MESURE_SEQUENCE = seq
-    MESURE_SEQUENCE_VERIFY = False
     return
 
 
