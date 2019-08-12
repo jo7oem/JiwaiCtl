@@ -22,20 +22,21 @@ class StatusList:
     iout = 0.0
     field = 0.0
     vout = 0.0
+    target=0.0
     loadtime = datetime.datetime
     diff_second = 0
 
     def __str__(self):
-        return "{:03} sec ISET= {:+.3f} A\tIOUT= {:+.3f}A\tField= {:+.1f} G\tVOUT= {:+.3f} ".format(
+        return "{:03} sec ISET= {:+.3f} A\tIOUT= {:+.3f}A\tField= {:+.1f} G\tVOUT= {:+.3f} \Target= {:+03}".format(
             self.diff_second, self.iset, self.iout,
-            self.field, self.vout)
+            self.field, self.vout,self.target)
 
     def set_origine_time(self, start_time: datetime.datetime):
         self.loadtime = datetime.datetime.now()
         self.diff_second = (self.loadtime - start_time).seconds
 
     def out_tuple(self) -> tuple:
-        return self.diff_second, self.iset, self.iout, self.field, self.vout
+        return self.diff_second, self.iset, self.iout, self.field, self.vout, self.target
 
 
 def load_status(iout=True, iset=True, vout=True, field=True) -> StatusList:
@@ -190,7 +191,7 @@ def gen_csv_header(filename: str) -> (str, datetime.datetime):
     return file_path, start_time
 
 
-def save_status(filename: str, status: StatusList, target: float = 0.0) -> None:
+def save_status(filename: str, status: StatusList) -> None:
     """
     ファイルにステータスを追記する
 
@@ -205,7 +206,7 @@ def save_status(filename: str, status: StatusList, target: float = 0.0) -> None:
 
     with open(filename, mode='a', encoding="utf-8")as f:
         writer = csv.writer(f, lineterminator='\n')
-        writer.writerow(result, target)
+        writer.writerow(result)
     return
 
 
@@ -225,7 +226,8 @@ def mesure_process(mesure_setting, mesure_seq, start_time, save_file=None):
         status.set_origine_time(start_time)
         print(status)
         if save_file:
-            save_status(save_file, status, target=target)
+            status.target=target
+            save_status(save_file, status)
         time.sleep(post_lock_time)
     return
 
@@ -274,14 +276,17 @@ def mesure():
         print("消磁中")
         demag()
         print("消磁完了")
+    loop=0
     for seq in operation["seq"]:
+        loop+=1
         print("測定シーケンスに入ります Y/n")
         ans = input(">>>>>").lower()
         if ans == "n":
             break
-
         file = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".log"
         file, start_time = gen_csv_header(file)
+        if loop >=2:
+            time.sleep(10)
         mesure_process(operation, seq, start_time, save_file=file)
     power.set_iset(Current(0, "mA"))
 
