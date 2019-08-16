@@ -234,15 +234,23 @@ def save_status(filename: str, status: StatusList) -> None:
 
 def measure_process(measure_setting: typing.Dict[str], measure_seq: typing.List[int], start_time: datetime.datetime,
                     save_file: str = None) -> None:
-    pre_lock_time = measure_setting["pre_lock_sec"]
-    post_lock_time = measure_setting["post_lock_sec"]
+    """
+    測定シークエンスに従って測定を実施する
+
+    :param measure_setting: 測定設定ファイルの内容
+    :param measure_seq: 測定シークエンス intのリスト
+    :param start_time: 測定基準時刻
+    :param save_file: ログファイル名
+    """
+    pre_lock_time = measure_setting.get("pre_lock_sec", 1.5)
+    post_lock_time = measure_setting.get("post_lock_sec", 1.5)
     for target in measure_seq:
         if measure_setting["control"] == "current":
             power.set_iset(Current(target, "mA"))
         elif measure_setting["control"] == "oectl":
             magnet_field_ctl(target, True)
         else:
-            print(measure_setting["control"], "は不正な値")
+            print(measure_setting["control"], "は不正な値\n正しい制御方式を指定してください")
             raise ValueError
         time.sleep(pre_lock_time)
         status = load_status()
