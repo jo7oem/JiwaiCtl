@@ -231,16 +231,16 @@ def save_status(filename: str, status: StatusList) -> None:
     return
 
 
-def mesure_process(mesure_setting, mesure_seq, start_time, save_file=None):
-    pre_lock_time = mesure_setting["pre_lock_sec"]
-    post_lock_time = mesure_setting["post_lock_sec"]
-    for target in mesure_seq:
-        if mesure_setting["control"] == "current":
+def measure_process(measure_setting, measure_seq, start_time, save_file=None):
+    pre_lock_time = measure_setting["pre_lock_sec"]
+    post_lock_time = measure_setting["post_lock_sec"]
+    for target in measure_seq:
+        if measure_setting["control"] == "current":
             power.set_iset(Current(target, "mA"))
-        elif mesure_setting["control"] == "oectl":
+        elif measure_setting["control"] == "oectl":
             magnet_field_ctl(target, True)
         else:
-            print(mesure_setting["control"], "は不正な値")
+            print(measure_setting["control"], "は不正な値")
             raise ValueError
         time.sleep(pre_lock_time)
         status = load_status()
@@ -275,7 +275,7 @@ def mesure_test():
         start_time = datetime.datetime.now()
         print("測定開始:", start_time.strftime('%Y-%m-%d %H:%M:%S'))
         try:
-            mesure_process(operation, seq, start_time)
+            measure_process(operation, seq, start_time)
         except ValueError:
             print("測定値指定が不正です")
             return
@@ -305,7 +305,7 @@ def measure():
         file, start_time = gen_csv_header(file)
         if loop >= 2:
             time.sleep(10)
-        mesure_process(operation, seq, start_time, save_file=file)
+        measure_process(operation, seq, start_time, save_file=file)
     power.set_iset(Current(0, "mA"))
 
 
