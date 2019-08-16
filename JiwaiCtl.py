@@ -14,7 +14,7 @@ from machines_controller.bipolar_power_ctl import Current
 HELM_Oe2CURRENT_CONST = 20.960 / 1000  # ヘルムホルツコイル用磁界電流変換係数 mA換算用
 HELM_MANGET_FIELD_LIMIT = 150
 ELMG_MAGNET_FIELD_LIMIT = 4150
-MESURE_SEQUENCE = {}
+MEASURE_SEQUENCE = {}
 
 
 class StatusList:
@@ -164,8 +164,11 @@ def load_mesure_sequence(filename: str):
         print("設定ファイルの読み込み失敗"
               "ファイルの存在と構造を確認してください")
         return
-    global MESURE_SEQUENCE
-    MESURE_SEQUENCE = seq
+    global MEASURE_SEQUENCE
+    if seq.get("connect_to") != CONNECT_MAGNET:
+        print("設定ファイルの種別が不一致")
+        return
+    MEASURE_SEQUENCE = seq
     return
 
 
@@ -242,11 +245,8 @@ def get_time_str() -> str:
 
 
 def mesure_test():
-    operation = MESURE_SEQUENCE
+    operation = MEASURE_SEQUENCE
     if "connect_to" not in operation:
-        return
-    if operation["connect_to"] != CONNECT_MAGNET:
-        print("設定ファイルの種別が不一致")
         return
     if operation["demag"]:
         print("消磁中")
@@ -261,16 +261,16 @@ def mesure_test():
             print("測定値指定が不正です")
             return
     print("測定設定は検証されました。")
-    MESURE_SEQUENCE["verified"] = True
+    MEASURE_SEQUENCE["verified"] = True
     power.set_iset(Current(0, "mA"))
     return
 
 
 def mesure():
-    if not MESURE_SEQUENCE.get("verified", False):
+    if not MEASURE_SEQUENCE.get("verified", False):
         print("設定ファイルの検証を行ってください。")
         return
-    operation = MESURE_SEQUENCE
+    operation = MEASURE_SEQUENCE
     if operation["demag"]:
         print("消磁中")
         demag()
