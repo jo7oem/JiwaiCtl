@@ -370,6 +370,11 @@ def power_ctl(cmd: typing.List[str]) -> None:
 
 
 def gauss_ctl(cmd: typing.List[str]) -> None:
+    """
+    ガウスメーター関連のコマンド
+
+    :param cmd:入力コマンド文字列
+    """
     req = cmd[0]
     if req == "status":
         res = gauss.readable_magnetic_field_fetch()
@@ -392,7 +397,7 @@ def gauss_ctl(cmd: typing.List[str]) -> None:
         return
 
 
-def Oe_ctl(cmd, auto_range):
+def Oe_ctl(cmd: typing.List[str], auto_range: bool = False) -> None:
     if len(cmd) == 0:
         return
     target = cmd[0]
