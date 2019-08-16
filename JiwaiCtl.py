@@ -12,7 +12,7 @@ import machines_controller.gauss_ctl as visa_gs
 from machines_controller.bipolar_power_ctl import Current
 
 HELM_Oe2CURRENT_CONST = 20.960 / 1000  # ヘルムホルツコイル用磁界電流変換係数 mA換算用
-HELM_MANGET_FIELD_LIMIT = 150
+HELM_MAGNET_FIELD_LIMIT = 150
 ELMG_MAGNET_FIELD_LIMIT = 4150
 MEASURE_SEQUENCE = {}
 
@@ -31,7 +31,12 @@ class StatusList:
             self.diff_second, self.iset, self.iout,
             self.field, self.vout, self.target)
 
-    def set_origine_time(self, start_time: datetime.datetime):
+    def set_origin_time(self, start_time: datetime.datetime) -> None:
+        """
+        経過時間表示のための基準時刻を設定する
+
+        :param start_time: 基準時刻
+        """
         self.loadtime = datetime.datetime.now()
         self.diff_second = (self.loadtime - start_time).seconds
 
@@ -136,7 +141,7 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
         last_current = power.iset_fetch()
         return last_current
     elif CONNECT_MAGNET == "HELM":
-        if target > HELM_MANGET_FIELD_LIMIT:
+        if target > HELM_MAGNET_FIELD_LIMIT:
             print("[Error]\t磁界制御入力値過大")
             print("最大磁界200Oe")
             raise ValueError
@@ -225,7 +230,7 @@ def mesure_process(mesure_setting, mesure_seq, start_time, save_file=None):
             raise ValueError
         time.sleep(pre_lock_time)
         status = load_status()
-        status.set_origine_time(start_time)
+        status.set_origin_time(start_time)
         print(status)
         if save_file:
             status.target = target
