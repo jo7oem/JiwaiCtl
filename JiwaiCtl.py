@@ -325,7 +325,7 @@ def measure() -> None:
     power.set_iset(Current(0, "mA"))
 
 
-def power_ctl(cmd):
+def power_ctl(cmd: typing.List[str]) -> None:
     if len(cmd) == 0:
         return
     req = cmd[0]
@@ -351,7 +351,7 @@ def power_ctl(cmd):
         else:
             unit = "mA"
         try:
-            current = (Current(cmd[1], unit=unit))
+            current = (Current(float(cmd[1]), unit=unit))
         except ValueError:
             print("Command Value is Missing."
                   "ex) 400 mA or 4.2 A")
