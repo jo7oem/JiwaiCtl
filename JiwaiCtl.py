@@ -273,7 +273,10 @@ def get_time_str() -> str:
     return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
-def mesure_test():
+def measure_test() -> None:
+    """
+    測定設定ファイルを検証する
+    """
     operation = MEASURE_SEQUENCE
     if "connect_to" not in operation:
         return
@@ -295,7 +298,10 @@ def mesure_test():
     return
 
 
-def measure():
+def measure() -> None:
+    """
+    測定プログラム
+    """
     if not MEASURE_SEQUENCE.get("verified", False):
         print("設定ファイルの検証を行ってください。")
         return
@@ -308,8 +314,8 @@ def measure():
     for seq in operation["seq"]:
         loop += 1
         print("測定シーケンスに入ります Y/n")
-        ans = input(">>>>>").lower()
-        if ans == "n":
+        r = input(">>>>>").lower()
+        if r == "n":
             break
         file = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".log"
         file, start_time = gen_csv_header(file)
@@ -465,7 +471,7 @@ def main():
             load_measure_sequence(request[1])
             continue
         elif cmd in {"test"}:
-            mesure_test()
+            measure_test()
             continue
         elif cmd in {"mesure"}:
             measure()
