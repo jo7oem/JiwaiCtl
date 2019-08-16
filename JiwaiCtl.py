@@ -326,6 +326,12 @@ def measure() -> None:
 
 
 def power_ctl(cmd: typing.List[str]) -> None:
+    """
+    電源関連のコマンド
+
+    :param cmd:入力コマンド文字列
+
+    """
     if len(cmd) == 0:
         return
     req = cmd[0]
@@ -363,7 +369,7 @@ def power_ctl(cmd: typing.List[str]) -> None:
         return
 
 
-def gauss_ctl(cmd):
+def gauss_ctl(cmd: typing.List[str]) -> None:
     req = cmd[0]
     if req == "status":
         res = gauss.readable_magnetic_field_fetch()
