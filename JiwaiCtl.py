@@ -92,7 +92,7 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
         else:
             is_diff_field_up = False
         elmg_const = 1.0 - 0.16 * now_range
-        next_current = Current(now_current.mA() + (diff_field) * elmg_const, "mA")
+        next_current = Current(now_current.mA() + diff_field * elmg_const, "mA")
         while (is_diff_field_up and diff_field >= 1) or (not is_diff_field_up and diff_field <= -1):
             looplimit -= 1
             if now_current == next_current:
@@ -131,7 +131,7 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
             diff_field = target - now_field
             elmg_const = 1.0 - 0.16 * now_range
             now_current = power.iset_fetch()
-            next_current = Current(now_current.mA() + (diff_field) * elmg_const, "mA")
+            next_current = Current(now_current.mA() + diff_field * elmg_const, "mA")
             continue
         last_current = power.iset_fetch()
         return last_current
@@ -156,9 +156,9 @@ def cmdlist():
     print("comandlist thi is mock")
 
 
-def load_mesure_sequence(filename: str):
+def load_measure_sequence(filename: str):
     try:
-        with open("./mesure_sequence/" + filename, "r") as f:
+        with open("./measure_sequence/" + filename, "r") as f:
             seq = json.load(f)
     except json.JSONDecodeError:
         print("設定ファイルの読み込み失敗"
@@ -266,7 +266,7 @@ def mesure_test():
     return
 
 
-def mesure():
+def measure():
     if not MEASURE_SEQUENCE.get("verified", False):
         print("設定ファイルの検証を行ってください。")
         return
@@ -433,13 +433,13 @@ def main():
             demag_cmd(request[1:])
             continue
         elif cmd in {"load"}:
-            load_mesure_sequence(request[1])
+            load_measure_sequence(request[1])
             continue
         elif cmd in {"test"}:
             mesure_test()
             continue
         elif cmd in {"mesure"}:
-            mesure()
+            measure()
             continue
 
         else:
