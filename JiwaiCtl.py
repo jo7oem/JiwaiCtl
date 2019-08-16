@@ -74,6 +74,8 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
     :param target: ターゲット磁界(Oe)
     :param auto_range: オートレンジを使用するか(電磁石のみ有効)
     :return: 最終電流
+
+    :raise ValueError: 目標磁界が出力制限を超過する場合は命令を発行せずに例外を投げる
     """
     next_range = 0
     if CONNECT_MAGNET == "ELMG":  # 電磁石制御部
