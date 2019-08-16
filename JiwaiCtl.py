@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import time
+import typing
 
 import pyvisa
 
@@ -218,7 +219,7 @@ def save_status(filename: str, status: StatusList) -> None:
     ファイルにステータスを追記する
 
     --------
-    :type status: dict{"iset":float,"iout":float,"ifield"}
+    :type status: StatusList
     :param filename: 書き込むファイル名
     :param status: 書き込むデータ
     :return: None
@@ -231,7 +232,8 @@ def save_status(filename: str, status: StatusList) -> None:
     return
 
 
-def measure_process(measure_setting, measure_seq, start_time, save_file=None):
+def measure_process(measure_setting: typing.Dict[str], measure_seq: typing.List[int], start_time: datetime.datetime,
+                    save_file: str = None) -> None:
     pre_lock_time = measure_setting["pre_lock_sec"]
     post_lock_time = measure_setting["post_lock_sec"]
     for target in measure_seq:
