@@ -64,8 +64,19 @@ def load_status(iout=True, iset=True, vout=True, field=True) -> StatusList:
 
 
 def magnet_field_ctl(target: int, auto_range=False) -> Current:
+    """
+    磁界制御を行う
+    電磁石の場合は1 Oe -> 1 mA換算で電流を変化させる
+    ヘルムホルツコイルの場合は磁界-電流変換式を用いる
+
+    目標磁界に対応した電流値を最後に返す
+
+    :param target: ターゲット磁界(Oe)
+    :param auto_range: オートレンジを使用するか(電磁石のみ有効)
+    :return: 最終電流
+    """
     next_range = 0
-    if CONNECT_MAGNET == "ELMG":
+    if CONNECT_MAGNET == "ELMG":  # 電磁石制御部
         if target > ELMG_MAGNET_FIELD_LIMIT:
             print("[Error]\t磁界制御入力値過大")
             print("最大磁界4.1kOe")
@@ -91,22 +102,23 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
         now_field = gauss.magnetic_field_fetch()
         diff_field = target - now_field
         now_current = power.iset_fetch()
-        looplimit = 8
+        loop_limit = 8
         if diff_field > 0:
             is_diff_field_up = True
         else:
             is_diff_field_up = False
         elmg_const = 1.0 - 0.16 * now_range
         next_current = Current(now_current.mA() + diff_field * elmg_const, "mA")
-        while (is_diff_field_up and diff_field >= 1) or (not is_diff_field_up and diff_field <= -1):
-            looplimit -= 1
+        while (is_diff_field_up and diff_field >= 1) or (
+                not is_diff_field_up and diff_field <= -1):  # 目標磁界の1 Oe手前か超えたら制御成功とみなす
+            loop_limit -= 1
             if now_current == next_current:
                 return next_current
             power.set_iset(next_current)
             time.sleep(0.1)
             now_field = gauss.magnetic_field_fetch()
 
-            if looplimit == 0:
+            if loop_limit == 0:
                 break
             if auto_range:
                 if abs(now_field) >= 3000 and next_range == 0:
@@ -140,7 +152,7 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
             continue
         last_current = power.iset_fetch()
         return last_current
-    elif CONNECT_MAGNET == "HELM":
+    elif CONNECT_MAGNET == "HELM":  # ヘルムホルツコイル制御部
         if target > HELM_MAGNET_FIELD_LIMIT:
             print("[Error]\t磁界制御入力値過大")
             print("最大磁界200Oe")
