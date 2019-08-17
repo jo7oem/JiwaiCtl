@@ -232,7 +232,7 @@ def save_status(filename: str, status: StatusList) -> None:
     return
 
 
-def measure_process(measure_setting: Dict[str, object], measure_seq, start_time: datetime.datetime,
+def measure_process(measure_setting: Dict[str, object], measure_seq: List[int], start_time: datetime.datetime,
                     save_file: str = None) -> None:
     """
     測定シークエンスに従って測定を実施する
@@ -434,7 +434,7 @@ def demag(step: int = 15):
     return
 
 
-def demag_cmd(cmd):
+def demag_cmd(cmd: List[str]) -> None:
     if len(cmd) == 0:
         step = 15
     else:
@@ -449,7 +449,7 @@ def demag_cmd(cmd):
     return
 
 
-def main():
+def main() -> None:
     auto_range = False
     while True:
         request = input(">>>").lstrip(" ").lower().split(" ")
@@ -537,17 +537,18 @@ def search_magnet():
         power.MAGNET_RESISTANCE = resistance
         return
     else:
-        print("Support Magnet Field is +-200Oe")
+        print("Support Magnet Field is +-100Oe")
         power.CURRENT_CHANGE_DELAY = 0.3
         CONNECT_MAGNET = "HELM"
-        power.set_iset(Current(500, "mA"))
+        power.set_iset(Current(400, "mA"))
         time.sleep(0.2)
         resistance = power.vout_fetch() / power.iout_fetch().A()
         power.MAGNET_RESISTANCE = resistance
+        gauss.range_set(2)
         return
 
 
-def init():
+def init() -> None:
     gauss.range_set(0)
     power.set_iset(Current(0, "mA"))
 
