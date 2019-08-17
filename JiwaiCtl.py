@@ -484,12 +484,12 @@ def main():
         elif cmd in {"test"}:
             measure_test()
             continue
-        elif cmd in {"mesure"}:
+        elif cmd in {"measure"}:
             measure()
             continue
 
         else:
-            print("""invaild command\nPlease type "h" or "help" """)
+            print("""invalid command\nPlease type "h" or "help" """)
             continue
 
 
