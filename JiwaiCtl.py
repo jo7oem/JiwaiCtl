@@ -4,7 +4,7 @@ import json
 import os
 import sys
 import time
-import typing
+from typing import Dict, List
 
 import pyvisa
 
@@ -232,7 +232,8 @@ def save_status(filename: str, status: StatusList) -> None:
     return
 
 
-def measure_process(measure_setting, measure_seq, start_time: datetime.datetime,save_file: str = None) -> None:
+def measure_process(measure_setting: Dict[str, object], measure_seq, start_time: datetime.datetime,
+                    save_file: str = None) -> None:
     """
     測定シークエンスに従って測定を実施する
 
@@ -324,7 +325,7 @@ def measure() -> None:
     power.set_iset(Current(0, "mA"))
 
 
-def power_ctl(cmd: typing.List[str]) -> None:
+def power_ctl(cmd: List[str]) -> None:
     """
     電源関連のコマンド
 
@@ -368,7 +369,7 @@ def power_ctl(cmd: typing.List[str]) -> None:
         return
 
 
-def gauss_ctl(cmd: typing.List[str]) -> None:
+def gauss_ctl(cmd: List[str]) -> None:
     """
     ガウスメーター関連のコマンド
 
@@ -396,7 +397,7 @@ def gauss_ctl(cmd: typing.List[str]) -> None:
         return
 
 
-def Oe_ctl(cmd: typing.List[str], auto_range: bool = False) -> None:
+def Oe_ctl(cmd: List[str], auto_range: bool = False) -> None:
     if len(cmd) == 0:
         return
     target = cmd[0]
