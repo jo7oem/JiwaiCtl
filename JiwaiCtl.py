@@ -232,8 +232,7 @@ def save_status(filename: str, status: StatusList) -> None:
     return
 
 
-def measure_process(measure_setting: typing.Dict[str], measure_seq: typing.List[int], start_time: datetime.datetime,
-                    save_file: str = None) -> None:
+def measure_process(measure_setting, measure_seq, start_time: datetime.datetime,save_file: str = None) -> None:
     """
     測定シークエンスに従って測定を実施する
 
