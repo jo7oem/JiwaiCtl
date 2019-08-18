@@ -1,21 +1,38 @@
 {
   "connect_to": "ELMG",
-  "demag": true,
-  "control": "current",
-  "pre_lock_sec": 1.5,
-  "post_lock_sec": 1.5,
+  "demag": false,
+  "control": "oectl",
+  "pre_lock_sec": 1.2,
+  "post_lock_sec": 1.2,
   "seq": [
     [
-      10,
-      20,
-      30,
-      0
+      4000,
+      3500,
+      3000,
+      2500,
+      0,
+      -5,
+      -10,
+      -15,
+      -20,
+      -3000,
+      -3500,
+      -4000
     ],
     [
-      30,
-      60,
-      90,
-      120
+      -4000,
+      -3500,
+      -3000,
+      -2500,
+      0,
+      5,
+      10,
+      15,
+      20,
+      3000,
+      3500,
+      4000
     ]
-  ]
+  ],
+  "verified": true
 }
