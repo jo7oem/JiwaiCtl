@@ -173,7 +173,18 @@ def print_status():
 
 
 def cmdlist():
-    print("comandlist thi is mock")
+    print("""
+    quit\t通常終了
+    load FileName \t ./measure_sequence以下のFileNameの測定定義ファイルを読み込む
+    test\t読み込んだ測定定義ファイルを検証する
+    measure\t測定動作を行う
+    demag\t消磁動作
+    
+    status\t電源,磁界の状態を表示
+    gaussctl\tガウスメーター制御コマンド群
+    powerctl\tバイポーラ電源制御コマンド群
+    oectl 目標値 (単位)\t磁界制御
+    """)
 
 
 def load_measure_sequence(filename: str):
@@ -365,7 +376,10 @@ def power_ctl(cmd: List[str]) -> None:
         power.set_iset(current)
         return
     else:
-        print("HELP Mock")
+        print("""
+        status\t電源状態表示
+        iset\t電流値設定[mA]
+        """)
         return
 
 
@@ -393,7 +407,12 @@ def gauss_ctl(cmd: List[str]) -> None:
             print("Gauss range is " + str(res))
             return
     else:
-        print("HELP Mock")
+        print("""
+        status\t磁界表示
+        range\t測定レンジ設定 indexの値はマニュアル参照
+        ex) range -> 現在のレンジ表示
+        ex) range 0 -> レンジを ~30kOeに設定
+        """)
         return
 
 
