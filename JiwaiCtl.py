@@ -266,9 +266,9 @@ def measure_process(measure_setting: Dict[str, object], measure_seq: List[int], 
         time.sleep(pre_lock_time)
         status = load_status()
         status.set_origin_time(start_time)
+        status.target = target
         print(status)
         if save_file:
-            status.target = target
             save_status(save_file, status)
         time.sleep(post_lock_time)
     return
