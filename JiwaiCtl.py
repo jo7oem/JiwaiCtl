@@ -191,6 +191,8 @@ def load_measure_sequence(filename: str):
     try:
         with open("./measure_sequence/" + filename, "r") as f:
             seq = json.load(f)
+    except FileNotFoundError:
+        print(filename + " is not found.")
     except json.JSONDecodeError:
         print("設定ファイルの読み込み失敗"
               "ファイルの存在と構造を確認してください")
