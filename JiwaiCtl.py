@@ -278,7 +278,7 @@ def measure_process(measure_setting: Dict[str, object], measure_seq: List[int], 
     if save_file:
         save_status(save_file, status)
 
-    if blocking_monitoring_time <= 0:
+    if blocking_monitoring_time <= 0.2:
         time.sleep(pre_block_time)
     else:
         for _ in range(blocking_monitoring_time, pre_block_time, blocking_monitoring_time):
@@ -309,7 +309,7 @@ def measure_process(measure_setting: Dict[str, object], measure_seq: List[int], 
             save_status(save_file, status)
         time.sleep(post_lock_time)
 
-    if blocking_monitoring_time <= 0:
+    if blocking_monitoring_time <= 0.2:
         time.sleep(post_block_time)
     else:
         for _ in range(blocking_monitoring_time, post_block_time, blocking_monitoring_time):
