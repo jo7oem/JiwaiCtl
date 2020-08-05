@@ -294,21 +294,13 @@ def measure_process(measure_setting: Dict[str, object], measure_seq: List[int], 
             save_status(save_file, status)
         time.sleep(post_lock_time)
 
-    if measure_setting["control"] == "current":
-        power.set_iset(Current(measure_seq[-1], "mA"))
-    elif measure_setting["control"] == "oectl":
-        magnet_field_ctl(measure_seq[-1], True)
-    else:
-        print(measure_setting["control"], "は不正な値\n正しい制御方式を指定してください")
-        raise ValueError
-    time.sleep(pre_lock_time)
+    time.sleep(post_block_time)
     status = load_status()
     status.set_origin_time(start_time)
     status.target = measure_seq[-1]
     print(status)
     if save_file:
         save_status(save_file, status)
-    time.sleep(pre_block_time)
 
     return
 
