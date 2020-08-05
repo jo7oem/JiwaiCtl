@@ -369,8 +369,6 @@ def measure() -> None:
             break
         file = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".log"
         file, start_time = gen_csv_header(file)
-        if loop >= 2:
-            time.sleep(10)
         measure_process(operation, seq, start_time, save_file=file)
     power.set_iset(Current(0, "mA"))
 
