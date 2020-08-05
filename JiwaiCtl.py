@@ -260,6 +260,7 @@ def measure_process(measure_setting: Dict[str, object], measure_seq: List[int], 
 
     pre_block_time = measure_setting.get("pre_block_sec", 10)
     post_block_time = measure_setting.get("post_block_sec", 10)
+    blocking_monitoring_time = measure_setting.get("blocking_monitoring_sec", 5)
 
     if measure_setting["control"] == "current":
         power.set_iset(Current(measure_seq[0], "mA"))
@@ -268,6 +269,7 @@ def measure_process(measure_setting: Dict[str, object], measure_seq: List[int], 
     else:
         print(measure_setting["control"], "は不正な値\n正しい制御方式を指定してください")
         raise ValueError
+
     time.sleep(pre_lock_time)
     status = load_status()
     status.set_origin_time(start_time)
@@ -275,7 +277,20 @@ def measure_process(measure_setting: Dict[str, object], measure_seq: List[int], 
     print(status)
     if save_file:
         save_status(save_file, status)
-    time.sleep(pre_block_time)
+
+    if blocking_monitoring_time <= 0:
+        time.sleep(pre_block_time)
+    else:
+        for _ in range(blocking_monitoring_time, pre_block_time, blocking_monitoring_time):
+            time.sleep(blocking_monitoring_time)
+            status = load_status()
+            status.set_origin_time(start_time)
+            status.target = measure_seq[0]
+            print(status)
+            if save_file:
+                save_status(save_file, status)
+
+        time.sleep(pre_block_time % blocking_monitoring_time)
 
     for target in measure_seq:
         if measure_setting["control"] == "current":
@@ -294,7 +309,20 @@ def measure_process(measure_setting: Dict[str, object], measure_seq: List[int], 
             save_status(save_file, status)
         time.sleep(post_lock_time)
 
-    time.sleep(post_block_time)
+    if blocking_monitoring_time <= 0:
+        time.sleep(post_block_time)
+    else:
+        for _ in range(blocking_monitoring_time, post_block_time, blocking_monitoring_time):
+            time.sleep(blocking_monitoring_time)
+            status = load_status()
+            status.set_origin_time(start_time)
+            status.target = measure_seq[0]
+            print(status)
+            if save_file:
+                save_status(save_file, status)
+
+        time.sleep(post_block_time % blocking_monitoring_time)
+
     status = load_status()
     status.set_origin_time(start_time)
     status.target = measure_seq[-1]
