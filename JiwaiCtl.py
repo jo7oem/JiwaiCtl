@@ -282,7 +282,7 @@ def measure_process(measure_setting: Dict[str, object], measure_seq: List[int], 
         time.sleep(pre_block_time)
     else:
         for _ in range(blocking_monitoring_time, pre_block_time, blocking_monitoring_time):
-            time.sleep(blocking_monitoring_time)
+            time.sleep(blocking_monitoring_time - 0.2)
             status = load_status()
             status.set_origin_time(start_time)
             status.target = measure_seq[0]
@@ -313,7 +313,7 @@ def measure_process(measure_setting: Dict[str, object], measure_seq: List[int], 
         time.sleep(post_block_time)
     else:
         for _ in range(blocking_monitoring_time, post_block_time, blocking_monitoring_time):
-            time.sleep(blocking_monitoring_time)
+            time.sleep(blocking_monitoring_time - 0.2)
             status = load_status()
             status.set_origin_time(start_time)
             status.target = measure_seq[0]
