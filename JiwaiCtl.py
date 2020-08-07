@@ -446,6 +446,8 @@ def gauss_ctl(cmd: List[str]) -> None:
 
     :param cmd:入力コマンド文字列
     """
+    if len(cmd) == 0:
+        return
     req = cmd[0]
     if req == "status":
         res = gauss.readable_magnetic_field_fetch()
