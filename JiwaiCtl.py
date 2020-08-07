@@ -435,7 +435,9 @@ def power_ctl(cmd: List[str]) -> None:
     else:
         print("""
         status\t電源状態表示
-        iset\t電流値設定[mA]
+        iset\t電流値設定[mA]表示
+        iset set x mA 電流出力設定(強制 安全装置なし)
+        
         """)
         return
 
