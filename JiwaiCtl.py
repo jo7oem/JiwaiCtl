@@ -515,7 +515,9 @@ def demag(step: int = 15):
 
 def current_demag(step: int = 15):
     if CONNECT_MAGNET == "ELMG":
-        max_current = power.set_iset(4300)
+        
+        max_current = Current(4300, "mA")
+        power.set_iset(max_current)
     elif CONNECT_MAGNET == "HELM":
         max_current = magnet_field_ctl(100, True)
     else:
