@@ -514,6 +514,24 @@ def demag(step: int = 15):
     return
 
 
+def current_demag(step: int = 15):
+    if CONNECT_MAGNET == "ELMG":
+        max_current = power.set_iset(4300)
+    elif CONNECT_MAGNET == "HELM":
+        max_current = magnet_field_ctl(100, True)
+    else:
+        raise ValueError
+    diff_current = int(int(max_current) / step)
+    current_seq = range(int(max_current), 0, -diff_current)
+    flag = 1
+    for i in current_seq:
+        flag = flag * -1
+        power.set_iset(Current(flag * i, "mA"))
+        time.sleep(0.5)
+    power.set_iset(Current(0, "mA"))
+    return
+
+
 def demag_cmd(cmd: List[str]) -> None:
     if len(cmd) == 0:
         step = 15
@@ -525,6 +543,21 @@ def demag_cmd(cmd: List[str]) -> None:
             return
     print("消磁開始")
     demag(step)
+    print("消磁終了")
+    return
+
+
+def current_demag_cmd(cmd: List[str]) -> None:
+    if len(cmd) == 0:
+        step = 15
+    else:
+        try:
+            step = int(cmd[0])
+        except ValueError:
+            print("step数の指定が不正です。")
+            return
+    print("消磁開始")
+    current_demag(step)
     print("消磁終了")
     return
 
@@ -555,6 +588,9 @@ def main() -> None:
             auto_range = not auto_range
             print("Auto Range is " + str(auto_range))
 
+        elif cmd in {"current_demag"}:
+            current_demag_cmd(request[1:])
+            continue
         elif cmd in {"demag"}:
             demag_cmd(request[1:])
             continue
