@@ -410,18 +410,16 @@ def power_ctl(cmd: List[str]) -> None:
     elif req == "iout":
         print("IOUT=" + str(power.iout_fetch()))
         return
-    elif req == "iset":
-        print("ISET=" + str(power.iset_fetch()))
-        return
+    
     elif req == "iout":
         print("IOUT=" + str(power.vout_fetch()) + "V")
         return
-    elif req in {"iset", "set"}:
+    elif req == "iset":
+        print("ISET=" + str(power.iset_fetch()))
         if len(cmd) == 1:
-            print("Missing paramator")
             return
-        if len(cmd) >= 3:
-            unit = cmd[2]
+        if len(cmd) >= 4:
+            unit = cmd[3]
         else:
             unit = "mA"
         try:
@@ -432,6 +430,7 @@ def power_ctl(cmd: List[str]) -> None:
             return
         power.set_iset(current)
         return
+    
     else:
         print("""
         status\t電源状態表示
