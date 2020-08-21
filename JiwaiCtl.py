@@ -410,7 +410,7 @@ def power_ctl(cmd: List[str]) -> None:
     elif req == "iout":
         print("IOUT=" + str(power.iout_fetch()))
         return
-    
+
     elif req == "iout":
         print("IOUT=" + str(power.vout_fetch()) + "V")
         return
@@ -430,7 +430,7 @@ def power_ctl(cmd: List[str]) -> None:
             return
         power.set_iset(current)
         return
-    
+
     else:
         print("""
         status\t電源状態表示
@@ -515,7 +515,7 @@ def demag(step: int = 15):
 
 def current_demag(step: int = 15):
     if CONNECT_MAGNET == "ELMG":
-        
+
         max_current = Current(4300, "mA")
         power.set_iset(max_current)
     elif CONNECT_MAGNET == "HELM":
