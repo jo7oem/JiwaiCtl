@@ -316,7 +316,7 @@ def measure_process(measure_setting: Dict[str, object], measure_seq: List[int], 
             time.sleep(blocking_monitoring_time - 0.2)
             status = load_status()
             status.set_origin_time(start_time)
-            status.target = measure_seq[0]
+            status.target = measure_seq[-1]
             print(status)
             if save_file:
                 save_status(save_file, status)
