@@ -508,12 +508,12 @@ def demag(step: int = 15, field_mode: bool = True):
     current_seq = range(int(max_current), 0, -diff_current)
     flag = 1
     for i in current_seq:
+        print("Step: " + str(i) + "/" + str(step))
         flag = flag * -1
         power.set_iset(Current(flag * i, "mA"))
         time.sleep(0.5)
     power.set_iset(Current(0, "mA"))
     return
-
 
 
 def demag_cmd(cmd: List[str]) -> None:
