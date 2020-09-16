@@ -495,29 +495,11 @@ def Oe_ctl(cmd: List[str], auto_range: bool = False) -> None:
     return
 
 
-def demag(step: int = 15):
-    if CONNECT_MAGNET == "ELMG":
+def demag(step: int = 15, field_mode: bool = True):
+    if CONNECT_MAGNET == "ELMG" and field_mode:
         max_current = magnet_field_ctl(4000, True)
-    elif CONNECT_MAGNET == "HELM":
-        max_current = magnet_field_ctl(100, True)
-    else:
-        raise ValueError
-    diff_current = int(int(max_current) / step)
-    current_seq = range(int(max_current), 0, -diff_current)
-    flag = 1
-    for i in current_seq:
-        flag = flag * -1
-        power.set_iset(Current(flag * i, "mA"))
-        time.sleep(0.5)
-    power.set_iset(Current(0, "mA"))
-    return
-
-
-def current_demag(step: int = 15):
-    if CONNECT_MAGNET == "ELMG":
-
+    elif CONNECT_MAGNET == "ELMG" and (not field_mode):
         max_current = Current(4300, "mA")
-        power.set_iset(max_current)
     elif CONNECT_MAGNET == "HELM":
         max_current = magnet_field_ctl(100, True)
     else:
@@ -531,6 +513,7 @@ def current_demag(step: int = 15):
         time.sleep(0.5)
     power.set_iset(Current(0, "mA"))
     return
+
 
 
 def demag_cmd(cmd: List[str]) -> None:
@@ -543,7 +526,7 @@ def demag_cmd(cmd: List[str]) -> None:
             print("step数の指定が不正です。")
             return
     print("消磁開始")
-    demag(step)
+    demag(step, field_mode=True)
     print("消磁終了")
     return
 
@@ -558,7 +541,7 @@ def current_demag_cmd(cmd: List[str]) -> None:
             print("step数の指定が不正です。")
             return
     print("消磁開始")
-    current_demag(step)
+    demag(step, field_mode=False)
     print("消磁終了")
     return
 
