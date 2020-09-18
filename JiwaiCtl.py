@@ -383,13 +383,17 @@ def measure() -> None:
     loop = 0
     for seq in operation["seq"]:
         loop += 1
-        print("測定シーケンスに入ります Y/n")
+        print("測定シーケンスに入ります Y/n s(kip)")
         r = input(">>>>>").lower()
         if r == "n":
             break
+        if r == "s":
+            continue
         file = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".log"
         file, start_time = gen_csv_header(file)
         measure_process(operation, seq, start_time, save_file=file)
+        print("測定完了")
+
     power.set_iset(Current(0, "mA"))
 
 
