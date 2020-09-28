@@ -508,16 +508,13 @@ def demag(step: int = 15, field_mode: bool = True):
         max_current = magnet_field_ctl(100, True)
     else:
         raise ValueError
-    diff_current = int(int(max_current) / step)
-    current_seq = range(int(max_current), 0, -diff_current)
     flag = 1
-    now_step = 1
-    for i in current_seq:
-        print("Step: " + str(now_step) + "/" + str(step))
+    for i in range(0, step):
+        print("Step: " + str(i) + "/" + str(step))
         flag = flag * -1
-        power.set_iset(Current(flag * i, "mA"))
+        power.set_iset(Current(flag * (step - i) / step * max_current.mA(), "mA"))
         time.sleep(0.5)
-        now_step = now_step + 1
+
     power.set_iset(Current(0, "mA"))
     return
 
