@@ -510,7 +510,7 @@ def demag(step: int = 15, field_mode: bool = True):
         raise ValueError
     flag = 1
     for i in range(0, step):
-        print("Step: " + str(i) + "/" + str(step))
+        print("Step: " + str(i + 1) + "/" + str(step))
         flag = flag * -1
         power.set_iset(Current(flag * (step - i) / step * max_current.mA(), "mA"))
         time.sleep(0.5)
