@@ -16,6 +16,8 @@ HELM_Oe2CURRENT_CONST = 20.960 / 1000  # ヘルムホルツコイル用磁界電
 HELM_MAGNET_FIELD_LIMIT = 150
 ELMG_MAGNET_FIELD_LIMIT = 4150
 MEASURE_SEQUENCE = {}
+IS_CACHE = False
+CACHED_SEQUENCE = [[]]
 
 
 class StatusList:
@@ -199,10 +201,17 @@ def load_measure_sequence(filename: str):
         print("設定ファイルの読み込み失敗"
               "JSONファイルの構造を確認してください")
         return
-    global MEASURE_SEQUENCE
     if seq.get("connect_to") != CONNECT_MAGNET:
         print("設定ファイルの種別が不一致")
         return
+
+    global IS_CACHE
+    IS_CACHE = False
+
+    global CACHED_SEQUENCE
+    CACHED_SEQUENCE = [[]]
+
+    global MEASURE_SEQUENCE
     MEASURE_SEQUENCE = seq
     return
 
