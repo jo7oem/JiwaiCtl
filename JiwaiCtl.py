@@ -188,11 +188,12 @@ def cmdlist():
 
 
 def load_measure_sequence(filename: str):
-    if not os.path.exists(filename):
+    json_path = "./measure_sequence/" + filename
+    if not os.path.exists(json_path):
         print("File not found! :", filename)
         return
     try:
-        with open("./measure_sequence/" + filename, "r") as f:
+        with open(json_path, "r") as f:
             seq = json.load(f)
     except json.JSONDecodeError:
         print("設定ファイルの読み込み失敗"
