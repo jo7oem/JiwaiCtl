@@ -4,7 +4,7 @@ import json
 import os
 import sys
 import time
-from typing import Dict, List
+from typing import List
 
 import pyvisa
 
@@ -15,9 +15,60 @@ from machines_controller.bipolar_power_ctl import Current
 HELM_Oe2CURRENT_CONST = 20.960 / 1000  # ヘルムホルツコイル用磁界電流変換係数 mA換算用
 HELM_MAGNET_FIELD_LIMIT = 150
 ELMG_MAGNET_FIELD_LIMIT = 4150
-MEASURE_SEQUENCE = {}
-IS_CACHE = False
-CACHED_SEQUENCE = [[]]
+
+
+class MeasureSetting:  # 33#
+    force_demag = False  # 測定前に消磁を強制するかどうか
+    verified = False  # 測定シークエンスが検証済みか
+    control_mode = "oectl"  # 制御モード "oectl":磁界制御, "current":電流制御
+
+    measure_sequence = [[]]  # 測定シークエンス
+
+    pre_lock_sec = 1.5  # 磁界設定後に状態を記録するまでの時間
+    post_lock_sec = 1.5  # 状態を記録してから状態をロックする時間
+
+    pre_block_sec = 10  # 測定シークエンスを開始する前に0番目の設定磁界でブロックする時間
+    post_block_sec = 10  # 最後の測定条件で記録してからBG補正用に同じ測定条件でブロックする時間
+    blocking_monitoring_sec = 5  # ブロック動作を行っているときにモニタリングを行う間隔
+
+    # 以下状態管理変数
+    is_cached = False
+    cached_sequence = [[]]
+
+    def __init__(self, seq_dict=None):
+        if seq_dict is None:
+            return
+        # 必須項目
+        if "seq" in seq_dict:
+            self.measure_sequence = seq_dict["seq"]
+        if "control" in seq_dict:
+            mode = seq_dict["control"]
+            if "oectl" in mode:
+                self.control_mode = "oectl"
+            elif "current" in mode:
+                self.control_mode = "current"
+            else:
+                print("[control] の設定値が不正")
+
+        # options
+        if "verified" in seq_dict:
+            self.verified = seq_dict["verified"]
+
+        if "pre_lock_sec" in seq_dict:
+            self.pre_lock_sec = seq_dict["pre_lock_sec"]
+        if "post_lock_sec" in seq_dict:
+            self.post_lock_sec = seq_dict["post_lock_sec"]
+
+        if "pre_block_sec" in seq_dict:
+            self.pre_block_sec = seq_dict["pre_block_sec"]
+        if "post_block_sec" in seq_dict:
+            self.post_block_sec = seq_dict["post_block_sec"]
+        if "blocking_monitoring_sec" in seq_dict:
+            self.blocking_monitoring_sec = seq_dict["blocking_monitoring_sec"]
+        return
+
+
+MEASURE_SEQUENCE = MeasureSetting()  # 設定ファイル格納先
 
 
 class StatusList:
@@ -205,14 +256,8 @@ def load_measure_sequence(filename: str):
         print("設定ファイルの種別が不一致")
         return
 
-    global IS_CACHE
-    IS_CACHE = False
-
-    global CACHED_SEQUENCE
-    CACHED_SEQUENCE = [[]]
-
     global MEASURE_SEQUENCE
-    MEASURE_SEQUENCE = seq
+    MEASURE_SEQUENCE = MeasureSetting(seq)
     return
 
 
@@ -256,7 +301,7 @@ def save_status(filename: str, status: StatusList) -> None:
     return
 
 
-def measure_process(measure_setting: Dict[str, object], measure_seq: List[int], start_time: datetime.datetime,
+def measure_process(measure_setting: MeasureSetting, measure_seq: List[int], start_time: datetime.datetime,
                     save_file: str = None) -> None:
     """
     測定シークエンスに従って測定を実施する
@@ -266,20 +311,17 @@ def measure_process(measure_setting: Dict[str, object], measure_seq: List[int], 
     :param start_time: 測定基準時刻
     :param save_file: ログファイル名
     """
-    pre_lock_time = measure_setting.get("pre_lock_sec", 1.5)
-    post_lock_time = measure_setting.get("post_lock_sec", 1.5)
+    pre_lock_time = measure_setting.pre_lock_sec
+    post_lock_time = measure_setting.post_lock_sec
 
-    pre_block_time = measure_setting.get("pre_block_sec", 10)
-    post_block_time = measure_setting.get("post_block_sec", 10)
-    blocking_monitoring_time = measure_setting.get("blocking_monitoring_sec", 5)
+    pre_block_time = measure_setting.pre_block_sec
+    post_block_time = measure_setting.post_block_sec
+    blocking_monitoring_time = measure_setting.blocking_monitoring_sec
 
-    if measure_setting["control"] == "current":
+    if measure_setting.control_mode == "current":
         power.set_iset(Current(measure_seq[0], "mA"))
-    elif measure_setting["control"] == "oectl":
+    elif measure_setting.control_mode == "oectl":
         magnet_field_ctl(measure_seq[0], True)
-    else:
-        print(measure_setting["control"], "は不正な値\n正しい制御方式を指定してください")
-        raise ValueError
 
     time.sleep(pre_lock_time)
     status = load_status()
@@ -304,13 +346,11 @@ def measure_process(measure_setting: Dict[str, object], measure_seq: List[int], 
         time.sleep(pre_block_time % blocking_monitoring_time)
 
     for target in measure_seq:
-        if measure_setting["control"] == "current":
+        if measure_setting.control_mode == "current":
             power.set_iset(Current(target, "mA"))
-        elif measure_setting["control"] == "oectl":
+        elif measure_setting.control_mode == "oectl":
             magnet_field_ctl(target, True)
-        else:
-            print(measure_setting["control"], "は不正な値\n正しい制御方式を指定してください")
-            raise ValueError
+
         time.sleep(pre_lock_time)
         status = load_status()
         status.set_origin_time(start_time)
@@ -358,14 +398,15 @@ def measure_test() -> None:
     """
     測定設定ファイルを検証する
     """
+    global MEASURE_SEQUENCE
     operation = MEASURE_SEQUENCE
     if "connect_to" not in operation:
         return
-    if operation["demag"]:
+    if operation.force_demag:
         print("消磁中")
         demag()
         print("消磁完了")
-    for seq in operation["seq"]:
+    for seq in operation.measure_sequence:
         start_time = datetime.datetime.now()
         print("測定開始:", start_time.strftime('%Y-%m-%d %H:%M:%S'))
         try:
@@ -374,7 +415,7 @@ def measure_test() -> None:
             print("測定値指定が不正です")
             return
     print("測定設定は検証されました。")
-    MEASURE_SEQUENCE["verified"] = True
+    MEASURE_SEQUENCE.verified = True
     power.set_iset(Current(0, "mA"))
     return
 
@@ -383,16 +424,17 @@ def measure() -> None:
     """
     測定プログラム
     """
-    if not MEASURE_SEQUENCE.get("verified", False):
+    global MEASURE_SEQUENCE
+    if not MEASURE_SEQUENCE.verified:
         print("設定ファイルの検証を行ってください。")
         return
     operation = MEASURE_SEQUENCE
-    if operation["demag"]:
+    if operation.force_demag:
         print("消磁中")
         demag()
         print("消磁完了")
     loop = 0
-    for seq in operation["seq"]:
+    for seq in operation.measure_sequence:
         loop += 1
         print("測定シーケンスに入ります Y/n s(kip)")
         r = input(">>>>>").lower()
