@@ -141,6 +141,57 @@ class MeasureSetting:  # 33#
 
         return
 
+    def measure(self) -> None:
+        """
+        測定プログラム
+        """
+        if not self.verified:
+            print("設定ファイルの検証を行ってください。")
+            return
+        if self.force_demag:
+            print("消磁中")
+            demag()
+            print("消磁完了")
+        loop = 0
+        for seq in self.measure_sequence:
+            loop += 1
+            print("測定シーケンスに入ります Y/n s(kip)")
+            r = input(">>>>>").lower()
+            if r == "n":
+                break
+            if r == "s":
+                continue
+            file = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".log"
+            file, start_time = gen_csv_header(file)
+            self.measure_process(seq, start_time, save_file=file)
+            print("測定完了")
+
+        power.set_iset(Current(0, "mA"))
+        return
+
+    def measure_test(self) -> None:
+        """
+        測定設定ファイルを検証する
+        """
+        if "connect_to" not in self:
+            return
+        if self.force_demag:
+            print("消磁中")
+            demag()
+            print("消磁完了")
+        for seq in self.measure_sequence:
+            start_time = datetime.datetime.now()
+            print("測定開始:", start_time.strftime('%Y-%m-%d %H:%M:%S'))
+            try:
+                self.measure_process(seq, start_time)
+            except ValueError:
+                print("測定値指定が不正です")
+                return
+        print("測定設定は検証されました。")
+        self.verified = True
+        power.set_iset(Current(0, "mA"))
+        return
+
 
 MEASURE_SEQUENCE = MeasureSetting()  # 設定ファイル格納先
 
@@ -385,62 +436,6 @@ def get_time_str() -> str:
     return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 
-def measure_test() -> None:
-    """
-    測定設定ファイルを検証する
-    """
-    global MEASURE_SEQUENCE
-    operation = MEASURE_SEQUENCE
-    if "connect_to" not in operation:
-        return
-    if operation.force_demag:
-        print("消磁中")
-        demag()
-        print("消磁完了")
-    for seq in operation.measure_sequence:
-        start_time = datetime.datetime.now()
-        print("測定開始:", start_time.strftime('%Y-%m-%d %H:%M:%S'))
-        try:
-            operation.measure_process(seq, start_time)
-        except ValueError:
-            print("測定値指定が不正です")
-            return
-    print("測定設定は検証されました。")
-    MEASURE_SEQUENCE.verified = True
-    power.set_iset(Current(0, "mA"))
-    return
-
-
-def measure() -> None:
-    """
-    測定プログラム
-    """
-    global MEASURE_SEQUENCE
-    if not MEASURE_SEQUENCE.verified:
-        print("設定ファイルの検証を行ってください。")
-        return
-    operation = MEASURE_SEQUENCE
-    if operation.force_demag:
-        print("消磁中")
-        demag()
-        print("消磁完了")
-    loop = 0
-    for seq in operation.measure_sequence:
-        loop += 1
-        print("測定シーケンスに入ります Y/n s(kip)")
-        r = input(">>>>>").lower()
-        if r == "n":
-            break
-        if r == "s":
-            continue
-        file = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".log"
-        file, start_time = gen_csv_header(file)
-        operation.measure_process(seq, start_time, save_file=file)
-        print("測定完了")
-
-    power.set_iset(Current(0, "mA"))
-
-
 def power_ctl(cmd: List[str]) -> None:
     """
     電源関連のコマンド
@@ -629,10 +624,10 @@ def main() -> None:
             load_measure_sequence(request[1])
             continue
         elif cmd in {"test"}:
-            measure_test()
+            MEASURE_SEQUENCE.measure_test()
             continue
         elif cmd in {"measure"}:
-            measure()
+            MEASURE_SEQUENCE.measure()
             continue
 
         else:
