@@ -3,6 +3,10 @@ import time
 import visa
 
 
+class GaussMeterOverRangeError(Exception):
+    pass
+
+
 class GaussMeter:
     def __init__(self) -> None:
         self.__gs = visa.ResourceManager().open_resource("ASRL3::INSTR")  # linux "ASRL/dev/ttyUSB0::INSTR"
@@ -23,6 +27,13 @@ class GaussMeter:
 
         res = float(self.__query("FIELD?"))
         multiplier = self.__query("FIELDM?")
+        if res == "__OL__":  # オーバーレンジ発生時の挙動
+            range = self.range_fetch()
+            if range == 0:  # 30kOe以上の挙動
+                raise GaussMeterOverRangeError()
+            self.range_set(range - 1)
+            return self.magnetic_field_fetch()
+
         if multiplier == "m":
             res = float(res) * 10 ** (-3)
         elif multiplier == "k":
