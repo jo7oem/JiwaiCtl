@@ -66,6 +66,5 @@ class GaussMeter:
         time.sleep(0.2)
         return
 
-
-def range_fetch(self) -> int:
-    return int(self.__query("RANGE?"))
+    def range_fetch(self) -> int:
+        return int(self.__query("RANGE?"))
