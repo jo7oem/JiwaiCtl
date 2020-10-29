@@ -190,6 +190,7 @@ def cmdlist():
 def load_measure_sequence(filename: str):
     if not os.path.exists(filename):
         print("File not found! :", filename)
+        return
     try:
         with open("./measure_sequence/" + filename, "r") as f:
             seq = json.load(f)
