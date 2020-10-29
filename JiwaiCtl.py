@@ -67,6 +67,80 @@ class MeasureSetting:  # 33#
             self.blocking_monitoring_sec = seq_dict["blocking_monitoring_sec"]
         return
 
+    def measure_process(self, measure_seq: List[int], start_time: datetime.datetime,
+                        save_file: str = None) -> None:
+        """
+        測定シークエンスに従って測定を実施する
+
+        :param measure_seq: 測定シークエンス intのリスト
+        :param start_time: 測定基準時刻
+        :param save_file: ログファイル名
+        """
+        if self.control_mode == "current":
+            power.set_iset(Current(measure_seq[0], "mA"))
+        elif self.control_mode == "oectl":
+            magnet_field_ctl(measure_seq[0], True)
+
+        time.sleep(self.pre_lock_sec)
+        status = load_status()
+        status.set_origin_time(start_time)
+        status.target = measure_seq[0]
+        print(status)
+        if save_file:
+            save_status(save_file, status)
+
+        if self.blocking_monitoring_sec <= 0.2:
+            time.sleep(self.pre_block_sec)
+        else:
+            for _ in range(self.blocking_monitoring_sec, self.pre_block_sec, self.blocking_monitoring_sec):
+                time.sleep(self.blocking_monitoring_sec - 0.2)
+                status = load_status()
+                status.set_origin_time(start_time)
+                status.target = measure_seq[0]
+                print(status)
+                if save_file:
+                    save_status(save_file, status)
+
+            time.sleep(self.pre_block_sec % self.blocking_monitoring_sec)
+
+        for target in measure_seq:
+            if self.control_mode == "current":
+                power.set_iset(Current(target, "mA"))
+            elif self.control_mode == "oectl":
+                magnet_field_ctl(target, True)
+
+            time.sleep(self.pre_lock_sec)
+            status = load_status()
+            status.set_origin_time(start_time)
+            status.target = target
+            print(status)
+            if save_file:
+                save_status(save_file, status)
+            time.sleep(self.post_lock_sec)
+
+        if self.blocking_monitoring_sec <= 0.2:
+            time.sleep(self.post_block_sec)
+        else:
+            for _ in range(self.blocking_monitoring_sec, self.post_block_sec, self.blocking_monitoring_sec):
+                time.sleep(self.blocking_monitoring_sec - 0.2)
+                status = load_status()
+                status.set_origin_time(start_time)
+                status.target = measure_seq[-1]
+                print(status)
+                if save_file:
+                    save_status(save_file, status)
+
+            time.sleep(self.post_block_sec % self.blocking_monitoring_sec)
+
+        status = load_status()
+        status.set_origin_time(start_time)
+        status.target = measure_seq[-1]
+        print(status)
+        if save_file:
+            save_status(save_file, status)
+
+        return
+
 
 MEASURE_SEQUENCE = MeasureSetting()  # 設定ファイル格納先
 
@@ -301,89 +375,6 @@ def save_status(filename: str, status: StatusList) -> None:
     return
 
 
-def measure_process(measure_setting: MeasureSetting, measure_seq: List[int], start_time: datetime.datetime,
-                    save_file: str = None) -> None:
-    """
-    測定シークエンスに従って測定を実施する
-
-    :param measure_setting: 測定設定ファイルの内容
-    :param measure_seq: 測定シークエンス intのリスト
-    :param start_time: 測定基準時刻
-    :param save_file: ログファイル名
-    """
-    pre_lock_time = measure_setting.pre_lock_sec
-    post_lock_time = measure_setting.post_lock_sec
-
-    pre_block_time = measure_setting.pre_block_sec
-    post_block_time = measure_setting.post_block_sec
-    blocking_monitoring_time = measure_setting.blocking_monitoring_sec
-
-    if measure_setting.control_mode == "current":
-        power.set_iset(Current(measure_seq[0], "mA"))
-    elif measure_setting.control_mode == "oectl":
-        magnet_field_ctl(measure_seq[0], True)
-
-    time.sleep(pre_lock_time)
-    status = load_status()
-    status.set_origin_time(start_time)
-    status.target = measure_seq[0]
-    print(status)
-    if save_file:
-        save_status(save_file, status)
-
-    if blocking_monitoring_time <= 0.2:
-        time.sleep(pre_block_time)
-    else:
-        for _ in range(blocking_monitoring_time, pre_block_time, blocking_monitoring_time):
-            time.sleep(blocking_monitoring_time - 0.2)
-            status = load_status()
-            status.set_origin_time(start_time)
-            status.target = measure_seq[0]
-            print(status)
-            if save_file:
-                save_status(save_file, status)
-
-        time.sleep(pre_block_time % blocking_monitoring_time)
-
-    for target in measure_seq:
-        if measure_setting.control_mode == "current":
-            power.set_iset(Current(target, "mA"))
-        elif measure_setting.control_mode == "oectl":
-            magnet_field_ctl(target, True)
-
-        time.sleep(pre_lock_time)
-        status = load_status()
-        status.set_origin_time(start_time)
-        status.target = target
-        print(status)
-        if save_file:
-            save_status(save_file, status)
-        time.sleep(post_lock_time)
-
-    if blocking_monitoring_time <= 0.2:
-        time.sleep(post_block_time)
-    else:
-        for _ in range(blocking_monitoring_time, post_block_time, blocking_monitoring_time):
-            time.sleep(blocking_monitoring_time - 0.2)
-            status = load_status()
-            status.set_origin_time(start_time)
-            status.target = measure_seq[-1]
-            print(status)
-            if save_file:
-                save_status(save_file, status)
-
-        time.sleep(post_block_time % blocking_monitoring_time)
-
-    status = load_status()
-    status.set_origin_time(start_time)
-    status.target = measure_seq[-1]
-    print(status)
-    if save_file:
-        save_status(save_file, status)
-
-    return
-
-
 def get_time_str() -> str:
     """
     現時刻を日本語に整形した文字列を返す
@@ -410,7 +401,7 @@ def measure_test() -> None:
         start_time = datetime.datetime.now()
         print("測定開始:", start_time.strftime('%Y-%m-%d %H:%M:%S'))
         try:
-            measure_process(operation, seq, start_time)
+            operation.measure_process(seq, start_time)
         except ValueError:
             print("測定値指定が不正です")
             return
@@ -444,7 +435,7 @@ def measure() -> None:
             continue
         file = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".log"
         file, start_time = gen_csv_header(file)
-        measure_process(operation, seq, start_time, save_file=file)
+        operation.measure_process(seq, start_time, save_file=file)
         print("測定完了")
 
     power.set_iset(Current(0, "mA"))
