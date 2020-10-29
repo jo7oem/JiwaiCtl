@@ -188,14 +188,14 @@ def cmdlist():
 
 
 def load_measure_sequence(filename: str):
+    if not os.path.exists(filename):
+        print("File not found! :", filename)
     try:
         with open("./measure_sequence/" + filename, "r") as f:
             seq = json.load(f)
-    except FileNotFoundError:
-        print(filename + " is not found.")
     except json.JSONDecodeError:
         print("設定ファイルの読み込み失敗"
-              "ファイルの存在と構造を確認してください")
+              "JSONファイルの構造を確認してください")
         return
     global MEASURE_SEQUENCE
     if seq.get("connect_to") != CONNECT_MAGNET:
