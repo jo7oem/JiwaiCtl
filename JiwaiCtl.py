@@ -49,7 +49,7 @@ class MeasureSetting:  # 33#
 
     @staticmethod
     def log_invalid_value(key: str, val: str, level: int = DEBUG) -> None:
-        logger.log(level, "[{0}] キーの設定値が不正 : 入力値 = {1} = {1}".format(key, val))
+        logger.log(level, "[{0}] キーの設定値が不正 : 入力値 = {1}".format(key, val))
         return
 
     @staticmethod
