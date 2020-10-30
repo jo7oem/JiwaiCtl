@@ -1,7 +1,7 @@
 import time
 import typing
 
-import visa
+import pyvisa as visa
 
 
 class Current(object):
