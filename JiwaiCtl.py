@@ -32,9 +32,12 @@ class MeasureSetting:  # 33#
     pre_lock_sec: float = 1.5  # 磁界設定後に状態を記録するまでの時間
     post_lock_sec: float = 1.5  # 状態を記録してから状態をロックする時間
 
-    pre_block_sec: int = 10  # 測定シークエンスを開始する前に0番目の設定磁界でブロックする時間
-    post_block_sec: int = 10  # 最後の測定条件で記録してからBG補正用に同じ測定条件でブロックする時間
-    blocking_monitoring_sec: int = 5  # ブロック動作を行っているときにモニタリングを行う間隔
+    pre_block_sec: float = 10  # 測定シークエンスを開始する前に0番目の設定磁界でブロックする時間
+    pre_block_td: datetime.timedelta = datetime.timedelta(seconds=10)
+    post_block_sec: float = 10  # 最後の測定条件で記録してからBG補正用に同じ測定条件でブロックする時間
+    post_block_td: datetime.timedelta = datetime.timedelta(seconds=10)
+    blocking_monitoring_sec: float = 5  # ブロック動作を行っているときにモニタリングを行う間隔
+    blocking_monitoring_td: datetime.timedelta = datetime.timedelta(seconds=5)
 
     # 以下状態管理変数
     have_error: bool = False
@@ -115,42 +118,37 @@ class MeasureSetting:  # 33#
                     self.post_lock_sec = val
 
         if (key := "pre_block_sec") in seq_dict:
-            minimum = 1
+            minimum = 0.2
             try:
-                val = int(seq_dict[key])
+                val = float(seq_dict[key])
             except ValueError:
                 self.log_invalid_value(key, seq_dict[key], WARNING)
                 self.verified = False
             else:
                 if val < minimum:
                     self.log_2small_value(key, val, minimum, WARNING)
-                    self.verified = False
-                elif not int(seq_dict[key]) == float(seq_dict[key]):
-                    self.log_invalid_value(key, seq_dict[key], WARNING)
                     self.verified = False
                 else:
                     self.pre_block_sec = val
+                    self.pre_block_td = datetime.timedelta(seconds=val)
         if (key := "post_block_sec") in seq_dict:
-
-            minimum = 1
+            minimum = 0.2
             try:
-                val = int(seq_dict[key])
+                val = float(seq_dict[key])
             except ValueError:
                 self.log_invalid_value(key, seq_dict[key], WARNING)
                 self.verified = False
             else:
                 if val < minimum:
                     self.log_2small_value(key, val, minimum, WARNING)
-                    self.verified = False
-                elif not int(seq_dict[key]) == float(seq_dict[key]):
-                    self.log_invalid_value(key, seq_dict[key], WARNING)
                     self.verified = False
                 else:
                     self.post_block_sec = val
+                    self.post_block_td = datetime.timedelta(seconds=val)
         if (key := "blocking_monitoring_sec") in seq_dict:
             minimum = 1
             try:
-                val = int(seq_dict[key])
+                val = float(seq_dict[key])
             except ValueError:
                 self.log_invalid_value(key, seq_dict[key], WARNING)
                 self.verified = False
@@ -158,12 +156,9 @@ class MeasureSetting:  # 33#
                 if val < minimum:
                     self.log_2small_value(key, val, minimum, WARNING)
                     self.verified = False
-                elif not int(seq_dict[key]) == float(seq_dict[key]):
-                    self.log_invalid_value(key, seq_dict[key], WARNING)
-                    self.verified = False
-
                 else:
                     self.blocking_monitoring_sec = val
+                    self.blocking_monitoring_td = datetime.timedelta(seconds=val)
         return
 
     def measure_lock_record(self, target: Union[float, int], pre_lock_time: float, post_lock_time: float,
@@ -194,57 +189,34 @@ class MeasureSetting:  # 33#
         :param start_time: 測定基準時刻
         :param save_file: ログファイル名
         """
-        if self.control_mode == "current":
-            power.set_iset(Current(measure_seq[0], "mA"))
-        elif self.control_mode == "oectl":
-            magnet_field_ctl(measure_seq[0], True)
 
-        time.sleep(self.pre_lock_sec)
-        status = load_status()
-        status.set_origin_time(start_time)
-        status.target = measure_seq[0]
-        print(status)
-        if save_file:
-            save_status(save_file, status)
-
-        if self.blocking_monitoring_sec <= 0.2:
-            time.sleep(self.pre_block_sec)
+        self.measure_lock_record(measure_seq[0], self.pre_lock_sec, 0, start_time, save_file)
+        before_record_time = datetime.datetime.now()
+        pre_block_end_time = before_record_time + self.pre_block_td
+        while (now_time := datetime.datetime.now()) <= (pre_block_end_time - self.blocking_monitoring_td):
+            dt = before_record_time + self.blocking_monitoring_td - now_time
+            self.measure_lock_record(measure_seq[0], float(dt.seconds) + float(dt.microseconds) * 10 ** -6, 0,
+                                     start_time, save_file)
+            before_record_time = now_time
         else:
-            for _ in range(self.blocking_monitoring_sec, self.pre_block_sec, self.blocking_monitoring_sec):
-                time.sleep(self.blocking_monitoring_sec - 0.2)
-                status = load_status()
-                status.set_origin_time(start_time)
-                status.target = measure_seq[0]
-                print(status)
-                if save_file:
-                    save_status(save_file, status)
-
-            time.sleep(self.pre_block_sec % self.blocking_monitoring_sec)
+            dt = pre_block_end_time - now_time
+            self.measure_lock_record(measure_seq[0], float(dt.seconds) + float(dt.microseconds) * 10 ** -6, 0,
+                                     start_time, save_file)
 
         for target in measure_seq:
             self.measure_lock_record(target, self.pre_lock_sec, self.post_lock_sec, start_time, save_file)
 
-        if self.blocking_monitoring_sec <= 0.2:
-            time.sleep(self.post_block_sec)
+        before_record_time = datetime.datetime.now()
+        post_block_end_time = before_record_time + self.post_block_td
+        while (now_time := datetime.datetime.now()) <= (post_block_end_time - self.blocking_monitoring_td):
+            dt = before_record_time + self.blocking_monitoring_td - now_time
+            self.measure_lock_record(measure_seq[-1], float(dt.seconds) + float(dt.microseconds) * 10 ** -6, 0,
+                                     start_time, save_file)
+            before_record_time = now_time
         else:
-            for _ in range(self.blocking_monitoring_sec, self.post_block_sec, self.blocking_monitoring_sec):
-                time.sleep(self.blocking_monitoring_sec - 0.2)
-                status = load_status()
-                status.set_origin_time(start_time)
-                status.target = measure_seq[-1]
-                print(status)
-                if save_file:
-                    save_status(save_file, status)
-
-            time.sleep(self.post_block_sec % self.blocking_monitoring_sec)
-
-        status = load_status()
-        status.set_origin_time(start_time)
-        status.target = measure_seq[-1]
-        print(status)
-        if save_file:
-            save_status(save_file, status)
-
+            dt = post_block_end_time - now_time
+            self.measure_lock_record(measure_seq[-1], float(dt.seconds) + float(dt.microseconds) * 10 ** -6, 0,
+                                     start_time, save_file)
         return
 
     def measure(self) -> None:
