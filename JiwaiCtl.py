@@ -62,6 +62,11 @@ class MeasureSetting:  # 33#
         logger.log(level, "[{0}] キーの設定値が小さい : 最低値 = {2} ,入力値 = {1} = {1}".format(key, val, minimum))
         return
 
+    @staticmethod
+    def log_use_default(key: str, val: Union[int, float, str]) -> None:
+        logger.warning("[{0}] キーが未定義 初期値を使用 : {1}".format(key, val))
+        return
+
     def __init__(self, seq_dict=None):
         if seq_dict is None:
             return
@@ -86,6 +91,7 @@ class MeasureSetting:  # 33#
             self.have_error = True
 
         # options
+        # 隠しキー TODO:HASH式に切り替える
         if (key := "verified") in seq_dict:
             try:
                 self.verified = bool(seq_dict[key])
@@ -105,6 +111,9 @@ class MeasureSetting:  # 33#
                     self.verified = False
                 else:
                     self.pre_lock_sec = val
+        else:
+            self.log_use_default(key, self.pre_lock_sec)
+
         if (key := "post_lock_sec") in seq_dict:
             minimum = 0.1
             try:
@@ -118,6 +127,8 @@ class MeasureSetting:  # 33#
                     self.verified = False
                 else:
                     self.post_lock_sec = val
+        else:
+            self.log_use_default(key, self.post_lock_sec)
 
         if (key := "pre_block_sec") in seq_dict:
             minimum = 0.2
@@ -133,6 +144,9 @@ class MeasureSetting:  # 33#
                 else:
                     self.pre_block_sec = val
                     self.pre_block_td = datetime.timedelta(seconds=val)
+        else:
+            self.log_use_default(key, self.pre_block_sec)
+
         if (key := "post_block_sec") in seq_dict:
             minimum = 0.2
             try:
@@ -147,6 +161,9 @@ class MeasureSetting:  # 33#
                 else:
                     self.post_block_sec = val
                     self.post_block_td = datetime.timedelta(seconds=val)
+        else:
+            self.log_use_default(key, self.post_block_sec)
+
         if (key := "blocking_monitoring_sec") in seq_dict:
             minimum = 1
             try:
@@ -161,6 +178,9 @@ class MeasureSetting:  # 33#
                 else:
                     self.blocking_monitoring_sec = val
                     self.blocking_monitoring_td = datetime.timedelta(seconds=val)
+        else:
+            self.log_use_default(key, self.blocking_monitoring_sec)
+
         return
 
     def measure_lock_record(self, target: Union[float, int], pre_lock_time: float, post_lock_time: float,
