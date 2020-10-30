@@ -186,6 +186,7 @@ class MeasureSetting:  # 33#
                 self.measure_process(seq, start_time)
             except ValueError:
                 print("測定値指定が不正です")
+                self.verified = False
                 return
         print("測定設定は検証されました。")
         self.verified = True
