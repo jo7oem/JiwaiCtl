@@ -173,8 +173,6 @@ class MeasureSetting:  # 33#
         """
         測定設定ファイルを検証する
         """
-        if "connect_to" not in self:
-            return
         if self.force_demag:
             print("消磁中")
             demag()
