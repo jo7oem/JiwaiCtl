@@ -11,7 +11,7 @@ import pyvisa
 
 import machines_controller.bipolar_power_ctl as visa_bp
 import machines_controller.gauss_ctl as visa_gs
-from MesureSequence import MeasureSetting
+from MesureSettings import MeasureSetting
 from machines_controller.bipolar_power_ctl import Current
 
 LOGLEVEL = INFO

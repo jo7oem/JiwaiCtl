@@ -7,7 +7,7 @@ from JiwaiCtl import logger, power, magnet_field_ctl, load_status, save_status, 
 from machines_controller.bipolar_power_ctl import Current
 
 
-class MeasureSetting:  # 33#
+class MeasureSetting:  #
     force_demag: bool = False  # 測定前に消磁を強制するかどうか
     verified: bool = False  # 測定シークエンスが検証済みか
     control_mode: str = "oectl"  # 制御モード "oectl":磁界制御, "current":電流制御
