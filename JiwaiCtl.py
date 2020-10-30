@@ -746,19 +746,19 @@ def main() -> None:
 
 def search_magnet():
     global CONNECT_MAGNET
-    power.set_iset(Current(200, "mA"))
-    time.sleep(0.2)
-    resistance = power.vout_fetch() / power.iout_fetch().A()
-    if resistance > 4:
-        now = "ELMG"
-    else:
-        now = "HELM"
-    power.allow_output(False)
     while True:
+        power.set_iset(Current(200, "mA"))
+        time.sleep(0.2)
+        resistance = power.vout_fetch() / power.iout_fetch().A()
+        if resistance > 4:
+            now = "ELMG"
+        else:
+            now = "HELM"
+        power.allow_output(False)
         print("接続先を入力してください。"
               "電磁石=>\"ELMG\"\tヘルムホルツ=>\"HELM\"")
         answer = input(">>>")
-        if answer == now:
+        if now in answer:
             break
         elif answer == "Force":
             print("強制接続先を入力してください。"
@@ -800,21 +800,21 @@ def search_magnet():
 
 
 def setup_logger(log_folder, modname=__name__):
-    logger = getLogger(modname)
-    logger.setLevel(LOGLEVEL)
+    lg = getLogger(modname)
+    lg.setLevel(LOGLEVEL)
 
     sh = StreamHandler()
     sh.setLevel(PRINT_LOGLEVEL)
-    formatter = Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = Formatter('%(name)s\t: %(levelname)s\t: %(message)s')
     sh.setFormatter(formatter)
-    logger.addHandler(sh)
+    lg.addHandler(sh)
 
     fh = FileHandler(log_folder)  # fh = file handler
     fh.setLevel(LOGLEVEL)
-    fh_formatter = Formatter('%(asctime)s - %(filename)s - %(name)s - %(lineno)d - %(levelname)s - %(message)s')
+    fh_formatter = Formatter('%(asctime)s\t: %(filename)s\t: %(name)s\t: %(lineno)d\t: %(levelname)s\t: %(message)s')
     fh.setFormatter(fh_formatter)
-    logger.addHandler(fh)
-    return logger
+    lg.addHandler(fh)
+    return lg
 
 
 logger = setup_logger(LOGFILE)
@@ -863,7 +863,7 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as e:
-        print(e)
+        logger.critical(e)
 
     finally:
         init()
