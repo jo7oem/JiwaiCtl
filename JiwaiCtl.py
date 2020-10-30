@@ -4,7 +4,7 @@ import json
 import os
 import sys
 import time
-from logging import getLogger, StreamHandler, Formatter, FileHandler, DEBUG, WARNING, ERROR
+from logging import getLogger, StreamHandler, Formatter, FileHandler, INFO, DEBUG, WARNING, ERROR
 from typing import List
 from typing import Union
 
@@ -14,7 +14,7 @@ import machines_controller.bipolar_power_ctl as visa_bp
 import machines_controller.gauss_ctl as visa_gs
 from machines_controller.bipolar_power_ctl import Current
 
-LOGLEVEL = DEBUG
+LOGLEVEL = INFO
 LOGFILE = "JiwaiCtl.log"
 PRINT_LOGLEVEL = WARNING
 HELM_Oe2CURRENT_CONST = 20.960 / 1000  # ヘルムホルツコイル用磁界電流変換係数 mA換算用
@@ -125,6 +125,9 @@ class MeasureSetting:  # 33#
                 if val < minimum:
                     self.log_2small_value(key, val, minimum, WARNING)
                     self.verified = False
+                elif not int(seq_dict[key]) == float(seq_dict):
+                    self.log_invalid_value(key, seq_dict[key], WARNING)
+                    self.verified = False
                 else:
                     self.pre_block_sec = val
         if (key := "post_block_sec") in seq_dict:
@@ -139,6 +142,9 @@ class MeasureSetting:  # 33#
                 if val < minimum:
                     self.log_2small_value(key, val, minimum, WARNING)
                     self.verified = False
+                elif not int(seq_dict[key]) == float(seq_dict):
+                    self.log_invalid_value(key, seq_dict[key], WARNING)
+                    self.verified = False
                 else:
                     self.post_block_sec = val
         if (key := "blocking_monitoring_sec") in seq_dict:
@@ -152,6 +158,10 @@ class MeasureSetting:  # 33#
                 if val < minimum:
                     self.log_2small_value(key, val, minimum, WARNING)
                     self.verified = False
+                elif not int(seq_dict[key]) == float(seq_dict):
+                    self.log_invalid_value(key, seq_dict[key], WARNING)
+                    self.verified = False
+
                 else:
                     self.blocking_monitoring_sec = val
         return
