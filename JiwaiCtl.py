@@ -204,8 +204,12 @@ class MeasureSetting:  # 33#
             before_record_time = now_time
         else:
             now_time = datetime.datetime.now()
-            dt = pre_block_end_time - now_time
-            self.measure_lock_record(measure_seq[0], float(dt.seconds) + float(dt.microseconds) * 10 ** -6, 0,
+            if now_time > pre_block_end_time:
+                dts = 0
+            else:
+                dt = pre_block_end_time - now_time
+                dts = float(dt.seconds) + float(dt.microseconds) * 10 ** -6
+            self.measure_lock_record(measure_seq[0], dts, 0,
                                      start_time, save_file)
 
         for target in measure_seq:
