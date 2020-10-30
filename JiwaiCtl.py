@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import time
+from logging import getLogger, StreamHandler, Formatter, FileHandler, DEBUG, WARNING, ERROR
 from typing import List
 from typing import Union
 
@@ -13,59 +14,146 @@ import machines_controller.bipolar_power_ctl as visa_bp
 import machines_controller.gauss_ctl as visa_gs
 from machines_controller.bipolar_power_ctl import Current
 
+LOGLEVEL = DEBUG
+LOGFILE = "JiwaiCtl.log"
+PRINT_LOGLEVEL = WARNING
 HELM_Oe2CURRENT_CONST = 20.960 / 1000  # ヘルムホルツコイル用磁界電流変換係数 mA換算用
 HELM_MAGNET_FIELD_LIMIT = 150
 ELMG_MAGNET_FIELD_LIMIT = 4150
 
 
 class MeasureSetting:  # 33#
-    force_demag = False  # 測定前に消磁を強制するかどうか
-    verified = False  # 測定シークエンスが検証済みか
-    control_mode = "oectl"  # 制御モード "oectl":磁界制御, "current":電流制御
+    force_demag: bool = False  # 測定前に消磁を強制するかどうか
+    verified: bool = False  # 測定シークエンスが検証済みか
+    control_mode: str = "oectl"  # 制御モード "oectl":磁界制御, "current":電流制御
 
     measure_sequence = [[]]  # 測定シークエンス
 
-    pre_lock_sec = 1.5  # 磁界設定後に状態を記録するまでの時間
-    post_lock_sec = 1.5  # 状態を記録してから状態をロックする時間
+    pre_lock_sec: float = 1.5  # 磁界設定後に状態を記録するまでの時間
+    post_lock_sec: float = 1.5  # 状態を記録してから状態をロックする時間
 
-    pre_block_sec = 10  # 測定シークエンスを開始する前に0番目の設定磁界でブロックする時間
-    post_block_sec = 10  # 最後の測定条件で記録してからBG補正用に同じ測定条件でブロックする時間
-    blocking_monitoring_sec = 5  # ブロック動作を行っているときにモニタリングを行う間隔
+    pre_block_sec: int = 10  # 測定シークエンスを開始する前に0番目の設定磁界でブロックする時間
+    post_block_sec: int = 10  # 最後の測定条件で記録してからBG補正用に同じ測定条件でブロックする時間
+    blocking_monitoring_sec: int = 5  # ブロック動作を行っているときにモニタリングを行う間隔
 
     # 以下状態管理変数
-    is_cached = False
+    have_error: bool = False
+
+    is_cached: bool = False
     cached_sequence = [[]]
+
+    @staticmethod
+    def log_key_notfound(key: str, level: int = DEBUG) -> None:
+        logger.log(level, "[{0}] キーが見つかりません".format(key))
+        return
+
+    @staticmethod
+    def log_invalid_value(key: str, val: str, level: int = DEBUG) -> None:
+        logger.log(level, "[{0}] キーの設定値が不正 : 入力値 = {1} = {1}".format(key, val))
+        return
+
+    @staticmethod
+    def log_2small_value(key: str, val: Union[int, float], minimum: Union[int, float], level: int = DEBUG) -> None:
+        logger.log(level, "[{0}] キーの設定値が小さい : 最低値 = {2} ,入力値 = {1} = {1}".format(key, val, minimum))
+        return
 
     def __init__(self, seq_dict=None):
         if seq_dict is None:
             return
         # 必須項目
-        if "seq" in seq_dict:
-            self.measure_sequence = seq_dict["seq"]
-        if "control" in seq_dict:
-            mode = seq_dict["control"]
+        if (key := "seq") in seq_dict:
+            self.measure_sequence = seq_dict[key]
+        else:
+            self.log_key_notfound(key, ERROR)
+            self.have_error = True
+
+        if (key := "control") in seq_dict:
+            mode = seq_dict[key]
             if "oectl" in mode:
                 self.control_mode = "oectl"
             elif "current" in mode:
                 self.control_mode = "current"
             else:
-                print("[control] の設定値が不正")
+                self.log_invalid_value(key, seq_dict[key], ERROR)
+                self.have_error = True
+        else:
+            self.log_key_notfound(key, ERROR)
+            self.have_error = True
 
         # options
-        if "verified" in seq_dict:
-            self.verified = seq_dict["verified"]
+        if (key := "verified") in seq_dict:
+            try:
+                self.verified = bool(seq_dict[key])
+            except ValueError:
+                self.log_invalid_value(key, seq_dict[key], WARNING)
 
-        if "pre_lock_sec" in seq_dict:
-            self.pre_lock_sec = seq_dict["pre_lock_sec"]
-        if "post_lock_sec" in seq_dict:
-            self.post_lock_sec = seq_dict["post_lock_sec"]
+        if (key := "pre_lock_sec") in seq_dict:
+            minimum = 0.1
+            try:
+                val = float(seq_dict[key])
+            except ValueError:
+                self.log_invalid_value(key, seq_dict[key], WARNING)
+                self.verified = False
+            else:
+                if val < minimum:
+                    self.log_2small_value(key, val, minimum, WARNING)
+                    self.verified = False
+                else:
+                    self.pre_lock_sec = val
+        if (key := "post_lock_sec") in seq_dict:
+            minimum = 0.1
+            try:
+                val = float(seq_dict[key])
+            except ValueError:
+                self.log_invalid_value(key, seq_dict[key], WARNING)
+                self.verified = False
+            else:
+                if val < minimum:
+                    self.log_2small_value(key, val, minimum, WARNING)
+                    self.verified = False
+                else:
+                    self.post_lock_sec = val
 
-        if "pre_block_sec" in seq_dict:
-            self.pre_block_sec = seq_dict["pre_block_sec"]
-        if "post_block_sec" in seq_dict:
-            self.post_block_sec = seq_dict["post_block_sec"]
-        if "blocking_monitoring_sec" in seq_dict:
-            self.blocking_monitoring_sec = seq_dict["blocking_monitoring_sec"]
+        if (key := "pre_block_sec") in seq_dict:
+            minimum = 1
+            try:
+                val = int(seq_dict[key])
+            except ValueError:
+                self.log_invalid_value(key, seq_dict[key], WARNING)
+                self.verified = False
+            else:
+                if val < minimum:
+                    self.log_2small_value(key, val, minimum, WARNING)
+                    self.verified = False
+                else:
+                    self.pre_block_sec = val
+        if (key := "post_block_sec") in seq_dict:
+
+            minimum = 1
+            try:
+                val = int(seq_dict[key])
+            except ValueError:
+                self.log_invalid_value(key, seq_dict[key], WARNING)
+                self.verified = False
+            else:
+                if val < minimum:
+                    self.log_2small_value(key, val, minimum, WARNING)
+                    self.verified = False
+                else:
+                    self.post_block_sec = val
+        if (key := "blocking_monitoring_sec") in seq_dict:
+            minimum = 1
+            try:
+                val = int(seq_dict[key])
+            except ValueError:
+                self.log_invalid_value(key, seq_dict[key], WARNING)
+                self.verified = False
+            else:
+                if val < minimum:
+                    self.log_2small_value(key, val, minimum, WARNING)
+                    self.verified = False
+                else:
+                    self.blocking_monitoring_sec = val
         return
 
     def measure_lock_record(self, target: Union[float, int], pre_lock_time: float, post_lock_time: float,
@@ -181,6 +269,10 @@ class MeasureSetting:  # 33#
         """
         測定設定ファイルを検証する
         """
+        if self.have_error:
+            logger.error("設定ファイルに致命的な問題あり")
+            self.verified = False
+            return
         if self.force_demag:
             print("消磁中")
             demag()
@@ -695,6 +787,27 @@ def search_magnet():
         power.MAGNET_RESISTANCE = resistance
         gauss.range_set(2)
         return
+
+
+def setup_logger(log_folder, modname=__name__):
+    logger = getLogger(modname)
+    logger.setLevel(LOGLEVEL)
+
+    sh = StreamHandler()
+    sh.setLevel(PRINT_LOGLEVEL)
+    formatter = Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    sh.setFormatter(formatter)
+    logger.addHandler(sh)
+
+    fh = FileHandler(log_folder)  # fh = file handler
+    fh.setLevel(LOGLEVEL)
+    fh_formatter = Formatter('%(asctime)s - %(filename)s - %(name)s - %(lineno)d - %(levelname)s - %(message)s')
+    fh.setFormatter(fh_formatter)
+    logger.addHandler(fh)
+    return logger
+
+
+logger = setup_logger(LOGFILE)
 
 
 def init() -> None:
