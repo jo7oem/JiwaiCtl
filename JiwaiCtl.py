@@ -17,6 +17,8 @@ from machines_controller.bipolar_power_ctl import Current
 LOGLEVEL = INFO
 LOGFILE = "JiwaiCtl.log"
 PRINT_LOGLEVEL = WARNING
+# PRINT_LOGLEVEL = DEBUG
+
 HELM_Oe2CURRENT_CONST = 20.960 / 1000  # ヘルムホルツコイル用磁界電流変換係数 mA換算用
 HELM_MAGNET_FIELD_LIMIT = 150
 ELMG_MAGNET_FIELD_LIMIT = 4150
@@ -195,7 +197,9 @@ class MeasureSetting:  # 33#
         pre_block_end_time = before_record_time + self.pre_block_td
         while (now_time := datetime.datetime.now()) <= (pre_block_end_time - self.blocking_monitoring_td):
             dt = before_record_time + self.blocking_monitoring_td - now_time
-            self.measure_lock_record(measure_seq[0], float(dt.seconds) + float(dt.microseconds) * 10 ** -6, 0,
+            dts = float(dt.seconds) + float(dt.microseconds) * 10 ** -6
+            logger.debug(now_time, before_record_time, dt, dts)
+            self.measure_lock_record(measure_seq[0], dts, 0,
                                      start_time, save_file)
             before_record_time = now_time
         else:
