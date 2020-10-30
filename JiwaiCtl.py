@@ -805,13 +805,13 @@ def setup_logger(log_folder, modname=__name__):
 
     sh = StreamHandler()
     sh.setLevel(PRINT_LOGLEVEL)
-    formatter = Formatter('%(name)s\t: %(levelname)s\t: %(message)s')
+    formatter = Formatter('%(name)s : %(levelname)s : %(message)s')
     sh.setFormatter(formatter)
     lg.addHandler(sh)
 
     fh = FileHandler(log_folder)  # fh = file handler
     fh.setLevel(LOGLEVEL)
-    fh_formatter = Formatter('%(asctime)s\t: %(filename)s\t: %(name)s\t: %(lineno)d\t: %(levelname)s\t: %(message)s')
+    fh_formatter = Formatter('%(asctime)s : %(filename)s : %(name)s : %(lineno)d : %(levelname)s : %(message)s')
     fh.setFormatter(fh_formatter)
     lg.addHandler(fh)
     return lg
