@@ -4,7 +4,6 @@ import json
 import os
 import sys
 import time
-import copy
 from logging import getLogger, StreamHandler, Formatter, FileHandler, INFO, DEBUG, WARNING, ERROR
 from typing import List
 from typing import Union
@@ -194,40 +193,39 @@ class MeasureSetting:  # 33#
         """
 
         self.measure_lock_record(measure_seq[0], self.pre_lock_sec, 0, start_time, save_file)
-        before_record_time = datetime.datetime.now()
-        pre_block_end_time = before_record_time + self.pre_block_td
-        while datetime.datetime.now() <= (pre_block_end_time - self.blocking_monitoring_td):
-            now_time = datetime.datetime.now()
-            dt = before_record_time + self.blocking_monitoring_td - now_time
-            logger.debug(("dt=", str(dt)))
-            dts = float(dt.seconds) + float(dt.microseconds) * 10 ** -6
-            self.measure_lock_record(measure_seq[0], dts, 0,
-                                     start_time, save_file)
-            before_record_time = copy.deepcopy(now_time)
+        origin_time = datetime.datetime.now()
+        next_time = origin_time + self.blocking_monitoring_td
+        pre_block_end_time = origin_time + self.pre_block_td
+        last_time = pre_block_end_time - self.blocking_monitoring_td
+
+        while next_time > last_time:
+            while datetime.datetime.now() < next_time:
+                time.sleep(0.2)
+            self.measure_lock_record(measure_seq[0], 0, 0, start_time, save_file)
+            next_time = next_time + self.blocking_monitoring_td
         else:
-            now_time = datetime.datetime.now()
-            if now_time > pre_block_end_time:
-                dts = 0
-            else:
-                dt = pre_block_end_time - now_time
-                dts = float(dt.seconds) + float(dt.microseconds) * 10 ** -6
-            self.measure_lock_record(measure_seq[0], dts, 0,
-                                     start_time, save_file)
+            while datetime.datetime.now() < pre_block_end_time:
+                time.sleep(0.2)
+            self.measure_lock_record(measure_seq[0], 0, 0, start_time, save_file)
 
         for target in measure_seq:
             self.measure_lock_record(target, self.pre_lock_sec, self.post_lock_sec, start_time, save_file)
 
-        before_record_time = datetime.datetime.now()
-        post_block_end_time = before_record_time + self.post_block_td
-        while (now_time := datetime.datetime.now()) <= (post_block_end_time - self.blocking_monitoring_td):
-            dt = before_record_time + self.blocking_monitoring_td - now_time
-            self.measure_lock_record(measure_seq[-1], float(dt.seconds) + float(dt.microseconds) * 10 ** -6, 0,
-                                     start_time, save_file)
-            before_record_time = now_time
+        origin_time = datetime.datetime.now()
+        next_time = origin_time + self.blocking_monitoring_td
+        post_block_end_time = origin_time + self.post_block_td
+        last_time = post_block_end_time - self.blocking_monitoring_td
+
+        while next_time > last_time:
+            while datetime.datetime.now() < next_time:
+                time.sleep(0.2)
+            self.measure_lock_record(measure_seq[-1], 0, 0, start_time, save_file)
+            next_time = next_time + self.blocking_monitoring_td
         else:
-            dt = post_block_end_time - now_time
-            self.measure_lock_record(measure_seq[-1], float(dt.seconds) + float(dt.microseconds) * 10 ** -6, 0,
-                                     start_time, save_file)
+            while datetime.datetime.now() < post_block_end_time:
+                time.sleep(0.2)
+            self.measure_lock_record(measure_seq[-1], 0, 0, start_time, save_file)
+
         return
 
     def measure(self) -> None:
