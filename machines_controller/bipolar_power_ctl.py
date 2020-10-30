@@ -5,7 +5,7 @@ import pyvisa as visa
 
 
 class Current(object):
-    def __init__(self, current: typing.SupportsFloat = 0, unit: str = "mA") -> object:
+    def __init__(self, current: typing.SupportsFloat = 0, unit: str = "mA"):
 
         if unit in ["mA", "ma", "MA", "Ma"]:
             self.__current = round(float(current))
