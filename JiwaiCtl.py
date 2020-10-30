@@ -5,6 +5,7 @@ import os
 import sys
 import time
 from typing import List
+from typing import Union
 
 import pyvisa
 
@@ -67,6 +68,25 @@ class MeasureSetting:  # 33#
             self.blocking_monitoring_sec = seq_dict["blocking_monitoring_sec"]
         return
 
+    def measure_lock_record(self, target: Union[float, int], pre_lock_time: float, post_lock_time: float,
+                            start_time: datetime.datetime, save_file: str = None) -> Current:
+        current = Current()
+        if self.control_mode == "current":
+            current = Current(target, "mA")
+            power.set_iset(current)
+        elif self.control_mode == "oectl":
+            current = magnet_field_ctl(target, True)
+
+        time.sleep(pre_lock_time)
+        status = load_status()
+        status.set_origin_time(start_time)
+        status.target = target
+        print(status)
+        if save_file:
+            save_status(save_file, status)
+        time.sleep(post_lock_time)
+        return current
+
     def measure_process(self, measure_seq: List[int], start_time: datetime.datetime,
                         save_file: str = None) -> None:
         """
@@ -104,19 +124,7 @@ class MeasureSetting:  # 33#
             time.sleep(self.pre_block_sec % self.blocking_monitoring_sec)
 
         for target in measure_seq:
-            if self.control_mode == "current":
-                power.set_iset(Current(target, "mA"))
-            elif self.control_mode == "oectl":
-                magnet_field_ctl(target, True)
-
-            time.sleep(self.pre_lock_sec)
-            status = load_status()
-            status.set_origin_time(start_time)
-            status.target = target
-            print(status)
-            if save_file:
-                save_status(save_file, status)
-            time.sleep(self.post_lock_sec)
+            self.measure_lock_record(target, self.pre_lock_sec, self.post_lock_sec, start_time, save_file)
 
         if self.blocking_monitoring_sec <= 0.2:
             time.sleep(self.post_block_sec)
