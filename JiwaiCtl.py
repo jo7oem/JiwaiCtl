@@ -195,14 +195,15 @@ class MeasureSetting:  # 33#
         self.measure_lock_record(measure_seq[0], self.pre_lock_sec, 0, start_time, save_file)
         before_record_time = datetime.datetime.now()
         pre_block_end_time = before_record_time + self.pre_block_td
-        while (now_time := datetime.datetime.now()) <= (pre_block_end_time - self.blocking_monitoring_td):
+        while datetime.datetime.now() <= (pre_block_end_time - self.blocking_monitoring_td):
+            now_time = datetime.datetime.now()
             dt = before_record_time + self.blocking_monitoring_td - now_time
             dts = float(dt.seconds) + float(dt.microseconds) * 10 ** -6
-            logger.debug(now_time, before_record_time, dt, dts)
             self.measure_lock_record(measure_seq[0], dts, 0,
                                      start_time, save_file)
             before_record_time = now_time
         else:
+            now_time = datetime.datetime.now()
             dt = pre_block_end_time - now_time
             self.measure_lock_record(measure_seq[0], float(dt.seconds) + float(dt.microseconds) * 10 ** -6, 0,
                                      start_time, save_file)
@@ -777,7 +778,7 @@ def search_magnet():
 
 def setup_logger(log_folder, modname=__name__):
     lg = getLogger(modname)
-    lg.setLevel(LOGLEVEL)
+    lg.setLevel(DEBUG)
 
     sh = StreamHandler()
     sh.setLevel(PRINT_LOGLEVEL)
