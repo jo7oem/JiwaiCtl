@@ -125,7 +125,7 @@ class MeasureSetting:  # 33#
                 if val < minimum:
                     self.log_2small_value(key, val, minimum, WARNING)
                     self.verified = False
-                elif not int(seq_dict[key]) == float(seq_dict):
+                elif not int(seq_dict[key]) == float(seq_dict[key]):
                     self.log_invalid_value(key, seq_dict[key], WARNING)
                     self.verified = False
                 else:
@@ -142,7 +142,7 @@ class MeasureSetting:  # 33#
                 if val < minimum:
                     self.log_2small_value(key, val, minimum, WARNING)
                     self.verified = False
-                elif not int(seq_dict[key]) == float(seq_dict):
+                elif not int(seq_dict[key]) == float(seq_dict[key]):
                     self.log_invalid_value(key, seq_dict[key], WARNING)
                     self.verified = False
                 else:
@@ -158,7 +158,7 @@ class MeasureSetting:  # 33#
                 if val < minimum:
                     self.log_2small_value(key, val, minimum, WARNING)
                     self.verified = False
-                elif not int(seq_dict[key]) == float(seq_dict):
+                elif not int(seq_dict[key]) == float(seq_dict[key]):
                     self.log_invalid_value(key, seq_dict[key], WARNING)
                     self.verified = False
 
