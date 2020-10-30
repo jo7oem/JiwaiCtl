@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import time
+import copy
 from logging import getLogger, StreamHandler, Formatter, FileHandler, INFO, DEBUG, WARNING, ERROR
 from typing import List
 from typing import Union
@@ -198,11 +199,11 @@ class MeasureSetting:  # 33#
         while datetime.datetime.now() <= (pre_block_end_time - self.blocking_monitoring_td):
             now_time = datetime.datetime.now()
             dt = before_record_time + self.blocking_monitoring_td - now_time
-            logger.debug("dt=", str(dt))
+            logger.debug(("dt=", str(dt)))
             dts = float(dt.seconds) + float(dt.microseconds) * 10 ** -6
             self.measure_lock_record(measure_seq[0], dts, 0,
                                      start_time, save_file)
-            before_record_time = now_time
+            before_record_time = copy.deepcopy(now_time)
         else:
             now_time = datetime.datetime.now()
             if now_time > pre_block_end_time:
