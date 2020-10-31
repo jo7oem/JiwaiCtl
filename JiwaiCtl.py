@@ -419,6 +419,114 @@ def load_status(iout=True, iset=True, vout=True, field=True) -> StatusList:
     return result
 
 
+def print_status():
+    print(load_status())
+    return
+
+
+def cmdlist():
+    print("""
+    quit\t通常終了
+    load FileName \t ./measure_sequence以下のFileNameの測定定義ファイルを読み込む
+    test\t読み込んだ測定定義ファイルを検証する
+    measure\t測定動作を行う
+    demag\t消磁動作
+    
+    status\t電源,磁界の状態を表示
+    gaussctl\tガウスメーター制御コマンド群
+    powerctl\tバイポーラ電源制御コマンド群
+    oectl 目標値 (単位)\t磁界制御
+    """)
+
+
+def gen_csv_header(filename: str) -> (str, datetime.datetime):
+    """
+    ログのヘッダを書き込む
+
+    :param filename:
+    :return: 基準時刻
+    """
+    if not os.path.exists('logs'):
+        os.mkdir('logs')
+    file_path = "logs/" + filename
+    print("測定条件等メモ記入欄")
+    memo = input("memo :")
+    start_time = datetime.datetime.now()
+    with open(file_path, mode='a', encoding="utf-8")as f:
+        writer = csv.writer(f, lineterminator='\n')
+        writer.writerow(["開始時刻", start_time.strftime('%Y-%m-%d_%H-%M-%S')])
+        writer.writerow(["memo", memo])
+        writer.writerow(["#####"])
+        writer.writerow(["経過時間[sec]", "設定電流:ISET[A]", "出力電流:IOUT[A]", "磁界:H[Gauss]", "出力電圧:VOUT[V]", "設定値[G or I]"])
+    return file_path, start_time
+
+
+def save_status(filename: str, status: StatusList) -> None:
+    """
+    ファイルにステータスを追記する
+
+    --------
+    :type status: StatusList
+    :param filename: 書き込むファイル名
+    :param status: 書き込むデータ
+    :return: None
+    """
+    result = status.out_tuple()
+
+    with open(filename, mode='a', encoding="utf-8")as f:
+        writer = csv.writer(f, lineterminator='\n')
+        writer.writerow(result)
+    return
+
+
+def power_ctl(cmd: List[str]) -> None:
+    """
+    電源関連のコマンド
+
+    :param cmd:入力コマンド文字列
+
+    """
+    if len(cmd) == 0:
+        return
+    req = cmd[0]
+    if req == "status":
+        print("ISET=" + str(power.iset_fetch()) + "\tIOUT=" + str(power.iout_fetch()) + "\tVOUT=" + str(
+            power.vout_fetch()) + "V")
+        return
+    elif req == "iout":
+        print("IOUT=" + str(power.iout_fetch()))
+        return
+
+    elif req == "iout":
+        print("IOUT=" + str(power.vout_fetch()) + "V")
+        return
+    elif req == "iset":
+        print("ISET=" + str(power.iset_fetch()))
+        if len(cmd) == 1:
+            return
+        if len(cmd) >= 4:
+            unit = cmd[3]
+        else:
+            unit = "mA"
+        try:
+            current = (Current(float(cmd[1]), unit=unit))
+        except ValueError:
+            print("Command Value is Missing."
+                  "ex) 400 mA or 4.2 A")
+            return
+        power.set_iset(current)
+        return
+
+    else:
+        print("""
+        status\t電源状態表示
+        iset\t電流値設定[mA]表示
+        iset set x mA 電流出力設定(強制 安全装置なし)
+        
+        """)
+        return
+
+
 def magnet_field_ctl(target: int, auto_range=False) -> Current:
     """
     磁界制御を行う
@@ -520,124 +628,6 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
         return target_current
     else:
         raise ValueError
-
-
-def print_status():
-    print(load_status())
-    return
-
-
-def cmdlist():
-    print("""
-    quit\t通常終了
-    load FileName \t ./measure_sequence以下のFileNameの測定定義ファイルを読み込む
-    test\t読み込んだ測定定義ファイルを検証する
-    measure\t測定動作を行う
-    demag\t消磁動作
-    
-    status\t電源,磁界の状態を表示
-    gaussctl\tガウスメーター制御コマンド群
-    powerctl\tバイポーラ電源制御コマンド群
-    oectl 目標値 (単位)\t磁界制御
-    """)
-
-
-def gen_csv_header(filename: str) -> (str, datetime.datetime):
-    """
-    ログのヘッダを書き込む
-
-    :param filename:
-    :return: 基準時刻
-    """
-    if not os.path.exists('logs'):
-        os.mkdir('logs')
-    file_path = "logs/" + filename
-    print("測定条件等メモ記入欄")
-    memo = input("memo :")
-    start_time = datetime.datetime.now()
-    with open(file_path, mode='a', encoding="utf-8")as f:
-        writer = csv.writer(f, lineterminator='\n')
-        writer.writerow(["開始時刻", start_time.strftime('%Y-%m-%d_%H-%M-%S')])
-        writer.writerow(["memo", memo])
-        writer.writerow(["#####"])
-        writer.writerow(["経過時間[sec]", "設定電流:ISET[A]", "出力電流:IOUT[A]", "磁界:H[Gauss]", "出力電圧:VOUT[V]", "設定値[G or I]"])
-    return file_path, start_time
-
-
-def save_status(filename: str, status: StatusList) -> None:
-    """
-    ファイルにステータスを追記する
-
-    --------
-    :type status: StatusList
-    :param filename: 書き込むファイル名
-    :param status: 書き込むデータ
-    :return: None
-    """
-    result = status.out_tuple()
-
-    with open(filename, mode='a', encoding="utf-8")as f:
-        writer = csv.writer(f, lineterminator='\n')
-        writer.writerow(result)
-    return
-
-
-def get_time_str() -> str:
-    """
-    現時刻を日本語に整形した文字列を返す
-    ------------------------------
-    :rtype: str
-    :return: '2018-09-08 20:55:07'
-    """
-    return datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-
-def power_ctl(cmd: List[str]) -> None:
-    """
-    電源関連のコマンド
-
-    :param cmd:入力コマンド文字列
-
-    """
-    if len(cmd) == 0:
-        return
-    req = cmd[0]
-    if req == "status":
-        print("ISET=" + str(power.iset_fetch()) + "\tIOUT=" + str(power.iout_fetch()) + "\tVOUT=" + str(
-            power.vout_fetch()) + "V")
-        return
-    elif req == "iout":
-        print("IOUT=" + str(power.iout_fetch()))
-        return
-
-    elif req == "iout":
-        print("IOUT=" + str(power.vout_fetch()) + "V")
-        return
-    elif req == "iset":
-        print("ISET=" + str(power.iset_fetch()))
-        if len(cmd) == 1:
-            return
-        if len(cmd) >= 4:
-            unit = cmd[3]
-        else:
-            unit = "mA"
-        try:
-            current = (Current(float(cmd[1]), unit=unit))
-        except ValueError:
-            print("Command Value is Missing."
-                  "ex) 400 mA or 4.2 A")
-            return
-        power.set_iset(current)
-        return
-
-    else:
-        print("""
-        status\t電源状態表示
-        iset\t電流値設定[mA]表示
-        iset set x mA 電流出力設定(強制 安全装置なし)
-        
-        """)
-        return
 
 
 def gauss_ctl(cmd: List[str]) -> None:
