@@ -281,9 +281,11 @@ class MeasureSetting:  #
             print("消磁中")
             demag()
             print("消磁完了")
-        loop = 0
-        for seq in self.measure_sequence:
-            loop += 1
+        if self.use_cache and self.is_cached:
+            sequence = self.cached_sequence
+        else:
+            sequence = self.measure_sequence
+        for seq in sequence:
             print("測定シーケンスに入ります Y/n s(kip)")
             r = input(">>>>>").lower()
             if r == "n":
