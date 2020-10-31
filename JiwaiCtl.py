@@ -55,7 +55,7 @@ class MeasureSetting:  #
     filepath: str = None
 
     is_cached: bool = False
-    cached_sequence: List[List[Union[int, float]]] = [[]]
+    cached_sequence: List[List[Current]] = []
 
     @staticmethod
     def log_key_notfound(key: str, level: int = DEBUG) -> None:
@@ -219,7 +219,7 @@ class MeasureSetting:  #
         return current
 
     def measure_process(self, measure_seq: List[int], start_time: datetime.datetime,
-                        save_file: str = None) -> None:
+                        save_file: str = None) -> List[Current]:
         """
         測定シークエンスに従って測定を実施する
 
@@ -228,6 +228,7 @@ class MeasureSetting:  #
         :param save_file: ログファイル名
         """
 
+        res_current: List[Current] = []
         self.measure_lock_record(measure_seq[0], self.pre_lock_sec, 0, start_time, save_file)
         origin_time = datetime.datetime.now()
         next_time = origin_time + self.blocking_monitoring_td
@@ -245,7 +246,8 @@ class MeasureSetting:  #
             self.measure_lock_record(measure_seq[0], 0, 0, start_time, save_file)
 
         for target in measure_seq:
-            self.measure_lock_record(target, self.pre_lock_sec, self.post_lock_sec, start_time, save_file)
+            c = self.measure_lock_record(target, self.pre_lock_sec, self.post_lock_sec, start_time, save_file)
+            res_current.append(c)
 
         origin_time = datetime.datetime.now()
         next_time = origin_time + self.blocking_monitoring_td
@@ -262,7 +264,7 @@ class MeasureSetting:  #
                 time.sleep(0.2)
             self.measure_lock_record(measure_seq[-1], 0, 0, start_time, save_file)
 
-        return
+        return res_current
 
     def measure(self) -> None:
         """
@@ -296,6 +298,8 @@ class MeasureSetting:  #
         """
         測定設定ファイルを検証する
         """
+        self.cached_sequence.clear()
+        self.is_cached = False
         if self.have_error:
             logger.error("設定ファイルに致命的な問題あり")
             self.verified = False
@@ -308,11 +312,14 @@ class MeasureSetting:  #
             start_time = datetime.datetime.now()
             print("測定開始:", start_time.strftime('%Y-%m-%d %H:%M:%S'))
             try:
-                self.measure_process(seq, start_time)
+                cache = self.measure_process(seq, start_time)
             except ValueError:
                 logger.error("測定値指定が不正です")
                 self.verified = False
                 return
+            if self.use_cache:
+                self.cached_sequence.append(cache)
+        self.is_cached = True
         print("測定設定は検証されました。")
         power.set_iset(Current(0, "mA"))
         return
