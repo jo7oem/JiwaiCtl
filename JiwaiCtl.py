@@ -7,7 +7,7 @@ import sys
 import time
 from logging import DEBUG, ERROR, WARNING, INFO
 from logging import getLogger, StreamHandler, Formatter, FileHandler
-from typing import Union, List
+from typing import Union, List, Dict
 
 import pyvisa
 
@@ -31,7 +31,7 @@ class MeasureSetting:  #
     force_demag: bool = False  # 測定前に消磁を強制するかどうか
     control_mode: str = "oectl"  # 制御モード "oectl":磁界制御, "current":電流制御
 
-    measure_sequence = [[]]  # 測定シークエンス
+    measure_sequence: List[List[Union[int, float]]] = [[]]  # 測定シークエンス
 
     pre_lock_sec: float = 1.5  # 磁界設定後に状態を記録するまでの時間
     post_lock_sec: float = 1.5  # 状態を記録してから状態をロックする時間
@@ -43,13 +43,15 @@ class MeasureSetting:  #
     blocking_monitoring_sec: float = 5  # ブロック動作を行っているときにモニタリングを行う間隔
     blocking_monitoring_td: datetime.timedelta = datetime.timedelta(seconds=5)
 
+    use_cache: bool = False
+
     # 以下状態管理変数
     verified: bool = False  # 測定シークエンスが検証済みか
     have_error: bool = False
     filepath: str = None
 
     is_cached: bool = False
-    cached_sequence = [[]]
+    cached_sequence: List[List[Union[int, float]]] = [[]]
 
     @staticmethod
     def log_key_notfound(key: str, level: int = DEBUG) -> None:
@@ -71,7 +73,7 @@ class MeasureSetting:  #
         logger.warning("[{0}] キーが未定義 初期値を使用 : {1}".format(key, val))
         return
 
-    def __init__(self, seq_dict=None, filepath: str = None):
+    def __init__(self, seq_dict: Dict[str, any] = None, filepath: str = None):
         if seq_dict is None:
             return
         if filepath:
@@ -314,9 +316,9 @@ class MeasureSetting:  #
 
 class SettingDB:
     filepath: str = ""
-    db = dict()
-    seq = MeasureSetting(None, None)
-    now_hash = None
+    db: Dict[str, int] = dict()
+    seq: MeasureSetting = MeasureSetting(None, None)
+    now_hash: str = None
 
     def __init__(self, filename: str):
         self.filepath = "./" + filename
@@ -383,13 +385,12 @@ DB = SettingDB(DB_NAME)
 
 
 class StatusList:
-    iset = 0.0
-    iout = 0.0
-    field = 0.0
-    vout = 0.0
-    target = 0.0
-    loadtime = datetime.datetime
-    diff_second = 0
+    iset: float = 0.0
+    iout: float = 0.0
+    field: float = 0.0
+    vout: float = 0.0
+    target: float = 0.0
+    diff_second: int = 0
 
     def __str__(self):
         return "{:03} sec ISET= {:+.3f} A\tIOUT= {:+.3f}A\tField= {:+.1f} G\tVOUT= {:+.3f} \tTarget= {:+03}".format(
@@ -402,8 +403,8 @@ class StatusList:
 
         :param start_time: 基準時刻
         """
-        self.loadtime = datetime.datetime.now()
-        self.diff_second = (self.loadtime - start_time).seconds
+        loadtime = datetime.datetime.now()
+        self.diff_second = (loadtime - start_time).seconds
 
     def out_tuple(self) -> tuple:
         return self.diff_second, self.iset, self.iout, self.field, self.vout, self.target
@@ -516,7 +517,7 @@ def power_ctl(cmd: List[str]) -> None:
         return
 
 
-def magnet_field_ctl(target: int, auto_range=False) -> Current:
+def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
     """
     磁界制御を行う
     電磁石の場合は1 Oe -> 1 mA換算で電流を変化させる
@@ -794,7 +795,7 @@ def main() -> None:
             continue
 
 
-def search_magnet():
+def search_magnet() -> None:
     global CONNECT_MAGNET
     while True:
         power.set_iset(Current(200, "mA"))
