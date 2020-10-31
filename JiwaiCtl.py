@@ -199,10 +199,14 @@ class MeasureSetting:  #
 
         return
 
-    def measure_lock_record(self, target: Union[float, int], pre_lock_time: float, post_lock_time: float,
+    def measure_lock_record(self, target: Union[float, int, Current], pre_lock_time: float, post_lock_time: float,
                             start_time: datetime.datetime, save_file: str = None) -> Current:
-        current = Current()
-        if self.control_mode == "current":
+        current = None
+        if self.is_cached and self.use_cache:
+            current = target
+            power.set_iset(current)
+
+        elif self.control_mode == "current":
             current = Current(target, "mA")
             power.set_iset(current)
         elif self.control_mode == "oectl":
@@ -218,7 +222,7 @@ class MeasureSetting:  #
         time.sleep(post_lock_time)
         return current
 
-    def measure_process(self, measure_seq: List[int], start_time: datetime.datetime,
+    def measure_process(self, measure_seq: List[Union[int, float, Current]], start_time: datetime.datetime,
                         save_file: str = None) -> List[Current]:
         """
         測定シークエンスに従って測定を実施する

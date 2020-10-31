@@ -90,22 +90,22 @@ class BipolarPower:
             self.__write("OUT 0")
         return
 
-    def vout_fetch(self):
+    def vout_fetch(self) -> float:
         volt = self.__query("VOUT?").rstrip("V")
         return float(volt)
 
-    def iout_fetch(self):
+    def iout_fetch(self) -> Current:
         current = float(self.__query("IOUT?").rstrip("A"))
         return Current(current=current, unit="A")
 
-    def iset_fetch(self):
+    def iset_fetch(self) -> Current:
         current = float(self.__query("ISET?").rstrip("A"))
         return Current(current=current, unit="A")
 
-    def __set_iset(self, current):
+    def __set_iset(self, current: Current):
         self.__write("ISET " + str(current))
 
-    def set_iset(self, current):
+    def set_iset(self, current: Current):
         if abs(current) >= Current(10, "A") or current.A() * self.MAGNET_RESISTANCE >= 40:
             print("[Error]\t電源過負荷")
             print(self.MAGNET_RESISTANCE, current.A(), current.A() * self.MAGNET_RESISTANCE)
