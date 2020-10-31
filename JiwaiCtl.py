@@ -47,6 +47,7 @@ class MeasureSetting:  #
     blocking_monitoring_sec: float = 5  # ブロック動作を行っているときにモニタリングを行う間隔
     blocking_monitoring_td: datetime.timedelta = datetime.timedelta(seconds=5)
 
+    autorange: bool = False
     use_cache: bool = False
 
     # 以下状態管理変数
@@ -113,6 +114,16 @@ class MeasureSetting:  #
             self.have_error = True
 
         # options
+
+        if (key := "autorange") in seq_dict:
+            try:
+                self.autorange = bool(seq_dict[key])
+            except ValueError:
+                self.log_invalid_value(key, seq_dict[key], WARNING)
+        else:
+            if self.control_mode == "oectl":
+                self.log_use_default(key, self.pre_lock_sec)
+                self.verified = False
 
         if (key := "pre_lock_sec") in seq_dict:
             minimum = 0.1
@@ -206,7 +217,7 @@ class MeasureSetting:  #
             current = Current(target, "mA")
             power.set_iset(current)
         elif self.control_mode == "oectl":
-            current = magnet_field_ctl(target, True)
+            current = magnet_field_ctl(target, self.autorange)
 
         time.sleep(pre_lock_time)
         status = load_status()
@@ -357,26 +368,27 @@ class SettingDB:
         if not os.path.exists(json_path):
             logger.error("File not found! : {0} ".format(filename))
             return
+
+        self.hash_check(json_path)
+        if (key := self.now_hash) in self.db:
+            if self.db[key]:
+                logger.info("検証済み設定ファイル {0}".format(json_path))
+                self.seq.verified = True
+            else:
+                logger.info("設定ファイルの変更検知 {0}".format(json_path))
+        else:
+            logger.info("新しい設定ファイル {0}".format(json_path))
         try:
             with open(json_path, "r") as f:
                 seq = json.load(f)
         except json.JSONDecodeError:
             logger.error("設定ファイルの読み込み失敗 JSONファイルの構造を確認 ")
             return
-
-        self.hash_check(json_path)
         self.seq = MeasureSetting(seq)
-        if (key := self.now_hash) in self.db:
-            if self.db[key]:
-                logger.info("検証済み設定ファイル {0}".format(json_path))
-                self.seq.verified = True
-                print("設定ファイルは検証済み")
-            else:
-                logger.info("設定ファイルの変更検知 {0}".format(json_path))
-                print("設定ファイルに変更あり test 実行必須")
+        if self.seq.verified:
+            print("設定ファイルは検証済み")
         else:
-            logger.info("新しい設定ファイル {0}".format(json_path))
-            print("設定ファイルに変更あり test 実行必須")
+            print("設定ファイルに未検証の要素有り. test 実行必須")
         return
 
     def seq_verified(self, b: bool):
