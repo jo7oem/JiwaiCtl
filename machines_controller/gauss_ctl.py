@@ -27,10 +27,10 @@ class GaussMeter:
         try:
             res = float(self.__query("FIELD?"))
         except ValueError:  # オーバーレンジ発生時の挙動
-            range = self.range_fetch()
+            plobe_range = self.range_fetch()
             if range == 0:  # 30kOe以上の挙動
                 raise GaussMeterOverRangeError()
-            self.range_set(range - 1)
+            self.range_set(plobe_range - 1)
             return self.magnetic_field_fetch()
         multiplier = self.__query("FIELDM?")
         if multiplier == "m":
