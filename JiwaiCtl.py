@@ -7,7 +7,7 @@ import sys
 import time
 from logging import DEBUG, ERROR, WARNING, INFO
 from logging import getLogger, StreamHandler, Formatter, FileHandler
-from typing import Union, List, Dict
+from typing import Union, List, Dict, Final
 
 import pyvisa
 
@@ -20,11 +20,15 @@ LOGFILE = "JiwaiCtl.log"
 PRINT_LOGLEVEL = WARNING
 # PRINT_LOGLEVEL = DEBUG
 
-HELM_Oe2CURRENT_CONST = 20.960 / 1000  # ヘルムホルツコイル用磁界電流変換係数 mA換算用
-HELM_MAGNET_FIELD_LIMIT = 150
-ELMG_MAGNET_FIELD_LIMIT = 4150
+HELM_Oe2CURRENT_CONST: float = 20.960 / 1000  # ヘルムホルツコイル用磁界電流変換係数 mA換算用
+HELM_MAGNET_FIELD_LIMIT: Final = 150
+ELMG_MAGNET_FIELD_LIMIT: Final = 4150
 
-DB_NAME = "setting.db"
+OECTL_LOOP_LIMIT: int = 8
+OECTL_BASE_COEFFICIENT: float = 1
+OECTL_RANGE_COEFFICIENT: float = 1
+
+DB_NAME: Final = "setting.db"
 
 
 class MeasureSetting:  #
@@ -558,12 +562,12 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
         now_field = gauss.magnetic_field_fetch()
         diff_field = target - now_field
         now_current = power.iset_fetch()
-        loop_limit = 8
+        loop_limit = OECTL_LOOP_LIMIT
         if diff_field > 0:
             is_diff_field_up = True
         else:
             is_diff_field_up = False
-        elmg_const = 1.0 - 0.16 * now_range
+        elmg_const = (OECTL_BASE_COEFFICIENT - OECTL_RANGE_COEFFICIENT * now_range)
         next_current = Current(now_current.mA() + diff_field * elmg_const, "mA")
         while (is_diff_field_up and diff_field >= 1) or (
                 not is_diff_field_up and diff_field <= -1):  # 目標磁界の1 Oe手前か超えたら制御成功とみなす
