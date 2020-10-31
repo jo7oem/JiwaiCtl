@@ -549,16 +549,16 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
                 next_range = 1
             else:
                 next_range = 2
-            if now_range == next_range:
+            if now_range == next_range:  # レンジを変えないとき
                 auto_range = False
                 pass
-            elif now_range < next_range:
+            elif now_range < next_range:  # レンジを下げる方向
                 pass
-            else:
+            else:  # レンジを上げる
                 gauss.range_set(next_range)
                 now_range = next_range
-                time.sleep(0.5)
                 auto_range = False
+        # 初期差分算出
         now_field = gauss.magnetic_field_fetch()
         diff_field = target - now_field
         now_current = power.iset_fetch()
@@ -575,19 +575,22 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
             if now_current == next_current:
                 return next_current
             power.set_iset(next_current)
-            time.sleep(0.1)
-            now_field = gauss.magnetic_field_fetch()
-
+            while True:  # 磁界の一致を待つ
+                time.sleep(0.1)
+                palfield = gauss.magnetic_field_fetch()
+                if palfield == now_field:
+                    break
+                now_field = palfield
             if loop_limit == 0:
                 break
-            if auto_range:
+            if auto_range:  # レンジを下げる処理
                 if abs(now_field) >= 3000 and next_range == 0:
                     pass
                 elif abs(now_field) >= 300 and next_range >= 1:
                     gauss.range_set(1)
                     now_range = 1
                     now_field = gauss.magnetic_field_fetch()
-                    if next_range == 1:
+                    if next_range == 1:  # レンジ変更完了
                         auto_range = False
 
                 elif abs(now_field) < 300 and next_range == 2:
@@ -599,12 +602,7 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
                 else:
                     pass
 
-            while True:
-                time.sleep(0.1)
-                palfield = gauss.magnetic_field_fetch()
-                if palfield == now_field:
-                    break
-                now_field = palfield
+            # 次の設定値を算出
             diff_field = target - now_field
             elmg_const = OECTL_BASE_COEFFICIENT - OECTL_RANGE_COEFFICIENT * now_range
             now_current = power.iset_fetch()
