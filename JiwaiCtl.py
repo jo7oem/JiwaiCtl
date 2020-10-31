@@ -600,7 +600,7 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
         return last_current
     elif CONNECT_MAGNET == "HELM":  # ヘルムホルツコイル制御部
         if target > HELM_MAGNET_FIELD_LIMIT:
-            print("[Error]\t磁界制御入力値過大")
+            logger.error("[Error]\t磁界制御入力値過大")
             print("最大磁界200Oe")
             raise ValueError
         target_current = Current(int(target / HELM_Oe2CURRENT_CONST), "mA")
@@ -816,8 +816,8 @@ def search_magnet():
         elif answer == "":
             continue
         else:
-            print("接続先が不一致か入力内容が不正です。"
-                  "接続先を強制するには\"Force\"と入力してください")
+            logger.error("接続先が不一致か入力内容が不正")
+            print("接続先を強制するには\"Force\"と入力してください")
     power.allow_output(True)
     if now == "ELMG":
         print("Support Magnet Field is +-4kOe")
@@ -873,7 +873,7 @@ if __name__ == '__main__':
         try:
             gauss = visa_gs.GaussMeter()
         except pyvisa.Error:
-            print("[ERROR]\tガウスメーター接続失敗")
+            logger.error("ガウスメーター接続失敗")
             ans = input("R:リトライ. f:無視. q:終了 >")
             if ans in {"f", "F"}:
                 break
@@ -887,7 +887,7 @@ if __name__ == '__main__':
         try:
             power = visa_bp.BipolarPower()
         except pyvisa.Error:
-            print("[ERROR]\tバイポーラ電源接続失敗")
+            logger.error("バイポーラ電源接続失敗")
             ans = input("R:リトライ. f:無視. q:終了 >")
             if ans in {"f", "F"}:
                 break
