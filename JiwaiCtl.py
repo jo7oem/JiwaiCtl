@@ -538,7 +538,7 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
     next_range = 0
     if CONNECT_MAGNET == "ELMG":  # 電磁石制御部
         if target > ELMG_MAGNET_FIELD_LIMIT:
-            print("[Error]\t磁界制御入力値過大")
+            logger.error("磁界制御入力値過大")
             print("最大磁界4.1kOe")
             raise ValueError
         now_range = gauss.range_fetch()
@@ -614,7 +614,7 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
         return last_current
     elif CONNECT_MAGNET == "HELM":  # ヘルムホルツコイル制御部
         if target > HELM_MAGNET_FIELD_LIMIT:
-            logger.error("[Error]\t磁界制御入力値過大")
+            logger.error("磁界制御入力値過大")
             print("最大磁界200Oe")
             raise ValueError
         target_current = Current(int(target / HELM_Oe2CURRENT_CONST), "mA")
