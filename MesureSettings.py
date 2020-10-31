@@ -1,4 +1,7 @@
 import datetime
+import hashlib
+import json
+import os
 import time
 from logging import DEBUG, ERROR, WARNING
 from typing import Union, List
@@ -9,7 +12,6 @@ from machines_controller.bipolar_power_ctl import Current
 
 class MeasureSetting:  #
     force_demag: bool = False  # 測定前に消磁を強制するかどうか
-    verified: bool = False  # 測定シークエンスが検証済みか
     control_mode: str = "oectl"  # 制御モード "oectl":磁界制御, "current":電流制御
 
     measure_sequence = [[]]  # 測定シークエンス
@@ -25,7 +27,9 @@ class MeasureSetting:  #
     blocking_monitoring_td: datetime.timedelta = datetime.timedelta(seconds=5)
 
     # 以下状態管理変数
+    verified: bool = False  # 測定シークエンスが検証済みか
     have_error: bool = False
+    filepath: str = None
 
     is_cached: bool = False
     cached_sequence = [[]]
@@ -50,9 +54,12 @@ class MeasureSetting:  #
         logger.warning("[{0}] キーが未定義 初期値を使用 : {1}".format(key, val))
         return
 
-    def __init__(self, seq_dict=None):
+    def __init__(self, seq_dict=None, filepath: str = None):
         if seq_dict is None:
             return
+        if filepath:
+            self.filepath = filepath
+
         # 必須項目
         if (key := "seq") in seq_dict:
             self.measure_sequence = seq_dict[key]
@@ -74,12 +81,6 @@ class MeasureSetting:  #
             self.have_error = True
 
         # options
-        # 隠しキー TODO:HASH式に切り替える
-        if (key := "verified") in seq_dict:
-            try:
-                self.verified = bool(seq_dict[key])
-            except ValueError:
-                self.log_invalid_value(key, seq_dict[key], WARNING)
 
         if (key := "pre_lock_sec") in seq_dict:
             minimum = 0.1
@@ -277,10 +278,76 @@ class MeasureSetting:  #
             try:
                 self.measure_process(seq, start_time)
             except ValueError:
-                print("測定値指定が不正です")
+                logger.error("測定値指定が不正です")
                 self.verified = False
                 return
         print("測定設定は検証されました。")
-        self.verified = True
         power.set_iset(Current(0, "mA"))
+        return
+
+
+class SettingDB:
+    filepath: str = ""
+    db = dict()
+    seq = MeasureSetting(None, None)
+    now_hash = None
+
+    def __init__(self, filename: str):
+        self.filepath = "./" + filename
+        self.load_db()
+        return
+
+    def load_db(self) -> None:
+        if not os.path.exists(self.filepath):
+            return
+        try:
+            with open(self.filepath, "r") as f:
+                self.db = json.load(f)
+        except json.JSONDecodeError:
+            os.remove(self.filepath)
+            logger.warning("setting DB was broken!")
+            return
+        return
+
+    def save_db(self):
+        with open(self.filepath, mode='w', encoding="utf-8")as f:
+            json.dump(self.db, f)
+
+    def hash_check(self, filepath):
+        m = hashlib.sha512()
+        with open(filepath, 'rb') as f:
+            m.update(f.read())
+        self.now_hash = m.hexdigest()
+        return self.now_hash
+
+    def load_measure_sequence(self, filename: str):
+        json_path = os.path.abspath("./measure_sequence/" + filename)
+        if not os.path.exists(json_path):
+            logger.error("File not found! : {0} ".format(filename))
+            return
+        try:
+            with open(json_path, "r") as f:
+                seq = json.load(f)
+        except json.JSONDecodeError:
+            logger.error("設定ファイルの読み込み失敗 JSONファイルの構造を確認 ")
+            return
+
+        self.hash_check(json_path)
+        self.seq = MeasureSetting(seq)
+        if (key := self.now_hash) in self.db:
+            if self.db[key]:
+                logger.info("検証済み設定ファイル {0}".format(json_path))
+                self.seq.verified = True
+                print("設定ファイルは検証済み")
+            else:
+                logger.info("設定ファイルの変更検知 {0}".format(json_path))
+                print("設定ファイルに変更あり test 実行必須")
+        else:
+            logger.info("新しい設定ファイル {0}".format(json_path))
+            print("設定ファイルに変更あり test 実行必須")
+        return
+
+    def seq_verified(self, b: bool):
+        self.seq.verified = b
+        self.db[self.now_hash] = b
         return

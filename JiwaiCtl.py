@@ -1,6 +1,5 @@
 import csv
 import datetime
-import json
 import os
 import sys
 import time
@@ -11,7 +10,7 @@ import pyvisa
 
 import machines_controller.bipolar_power_ctl as visa_bp
 import machines_controller.gauss_ctl as visa_gs
-from MesureSettings import MeasureSetting
+from MesureSettings import SettingDB
 from machines_controller.bipolar_power_ctl import Current
 
 LOGLEVEL = INFO
@@ -23,7 +22,9 @@ HELM_Oe2CURRENT_CONST = 20.960 / 1000  # ヘルムホルツコイル用磁界電
 HELM_MAGNET_FIELD_LIMIT = 150
 ELMG_MAGNET_FIELD_LIMIT = 4150
 
-MEASURE_SEQUENCE = MeasureSetting()  # 設定ファイル格納先
+DB_NAME = "setting.db"
+
+DB = SettingDB(DB_NAME)
 
 
 class StatusList:
@@ -193,27 +194,6 @@ def cmdlist():
     powerctl\tバイポーラ電源制御コマンド群
     oectl 目標値 (単位)\t磁界制御
     """)
-
-
-def load_measure_sequence(filename: str):
-    json_path = "./measure_sequence/" + filename
-    if not os.path.exists(json_path):
-        print("File not found! :", filename)
-        return
-    try:
-        with open(json_path, "r") as f:
-            seq = json.load(f)
-    except json.JSONDecodeError:
-        print("設定ファイルの読み込み失敗"
-              "JSONファイルの構造を確認してください")
-        return
-    if seq.get("connect_to") != CONNECT_MAGNET:
-        print("設定ファイルの種別が不一致")
-        return
-
-    global MEASURE_SEQUENCE
-    MEASURE_SEQUENCE = MeasureSetting(seq)
-    return
 
 
 def gen_csv_header(filename: str) -> (str, datetime.datetime):
@@ -451,13 +431,17 @@ def main() -> None:
             demag_cmd(request[1:])
             continue
         elif cmd in {"load"}:
-            load_measure_sequence(request[1])
+            DB.load_measure_sequence(request[1])
             continue
         elif cmd in {"test"}:
-            MEASURE_SEQUENCE.measure_test()
+            DB.seq.measure_test()
+            if DB.seq.verified:
+                DB.seq_verified(True)
+            else:
+                DB.seq_verified(False)
             continue
         elif cmd in {"measure"}:
-            MEASURE_SEQUENCE.measure()
+            DB.seq.measure()
             continue
 
         else:
