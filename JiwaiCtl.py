@@ -610,60 +610,6 @@ def magnet_field_ctl(target: int, auto_range=False) -> Current:
         raise ValueError
 
 
-def gauss_ctl(cmd: List[str]) -> None:
-    """
-    ガウスメーター関連のコマンド
-
-    :param cmd:入力コマンド文字列
-    """
-    if len(cmd) == 0:
-        return
-    req = cmd[0]
-    if req == "status":
-        res = gauss.readable_magnetic_field_fetch()
-        print(res)
-        return
-    elif req == "range":
-        if len(cmd) >= 2:
-            try:
-                range_index = int(cmd[1])
-            except ValueError:
-                print("ValueError")
-                return
-            gauss.range_set(range_index)
-        else:
-            res = gauss.range_fetch()
-            print("Gauss range is " + str(res))
-            return
-    else:
-        print("""
-        status\t磁界表示
-        range\t測定レンジ設定 indexの値はマニュアル参照
-        ex) range -> 現在のレンジ表示
-        ex) range 0 -> レンジを ~30kOeに設定
-        """)
-        return
-
-
-def Oe_ctl(cmd: List[str], auto_range: bool = False) -> None:
-    if len(cmd) == 0:
-        return
-    target = cmd[0]
-    unit = ""
-    if len(cmd) >= 2:
-        unit = cmd[1]
-    try:
-        if unit == "k":
-            target = int(float(target) * 1000)
-        else:
-            target = int(target)
-    except ValueError:
-        print("ValeError!")
-        return
-    magnet_field_ctl(target, auto_range=auto_range)
-    return
-
-
 def demag(step: int = 15, field_mode: bool = True):
     if CONNECT_MAGNET == "ELMG" and field_mode:
         max_current = magnet_field_ctl(4000, True)
@@ -719,6 +665,60 @@ def print_status():
     return
 
 
+def Oe_cmd(cmd: List[str], auto_range: bool = False) -> None:
+    if len(cmd) == 0:
+        return
+    target = cmd[0]
+    unit = ""
+    if len(cmd) >= 2:
+        unit = cmd[1]
+    try:
+        if unit == "k":
+            target = int(float(target) * 1000)
+        else:
+            target = int(target)
+    except ValueError:
+        print("ValeError!")
+        return
+    magnet_field_ctl(target, auto_range=auto_range)
+    return
+
+
+def gauss_cmd(cmd: List[str]) -> None:
+    """
+    ガウスメーター関連のコマンド
+
+    :param cmd:入力コマンド文字列
+    """
+    if len(cmd) == 0:
+        return
+    req = cmd[0]
+    if req == "status":
+        res = gauss.readable_magnetic_field_fetch()
+        print(res)
+        return
+    elif req == "range":
+        if len(cmd) >= 2:
+            try:
+                range_index = int(cmd[1])
+            except ValueError:
+                print("ValueError")
+                return
+            gauss.range_set(range_index)
+        else:
+            res = gauss.range_fetch()
+            print("Gauss range is " + str(res))
+            return
+    else:
+        print("""
+        status\t磁界表示
+        range\t測定レンジ設定 indexの値はマニュアル参照
+        ex) range -> 現在のレンジ表示
+        ex) range 0 -> レンジを ~30kOeに設定
+        """)
+        return
+
+
 def cmdlist():
     print("""
     quit\t通常終了
@@ -751,10 +751,10 @@ def main() -> None:
             power_ctl(request[1:])
             continue
         elif cmd in {"gaussctl"}:
-            gauss_ctl(request[1:])
+            gauss_cmd(request[1:])
             continue
         elif cmd in {"oectl"}:
-            Oe_ctl(request[1:], auto_range)
+            Oe_cmd(request[1:], auto_range)
             continue
         elif cmd in {"autorange"}:
             auto_range = not auto_range
