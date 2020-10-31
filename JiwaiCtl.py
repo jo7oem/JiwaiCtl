@@ -78,6 +78,15 @@ class MeasureSetting:  #
             self.filepath = filepath
 
         # 必須項目
+        if (key := "connect_to") in seq_dict:
+            mode = seq_dict[key]
+            if not (mode in CONNECT_MAGNET):
+                logger.error("設定ファイルと現在の接続先磁石が不一致")
+                self.have_error = True
+        else:
+            self.log_key_notfound(key, ERROR)
+            self.have_error = True
+
         if (key := "seq") in seq_dict:
             self.measure_sequence = seq_dict[key]
         else:
