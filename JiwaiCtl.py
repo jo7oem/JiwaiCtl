@@ -419,26 +419,6 @@ def load_status(iout=True, iset=True, vout=True, field=True) -> StatusList:
     return result
 
 
-def print_status():
-    print(load_status())
-    return
-
-
-def cmdlist():
-    print("""
-    quit\t通常終了
-    load FileName \t ./measure_sequence以下のFileNameの測定定義ファイルを読み込む
-    test\t読み込んだ測定定義ファイルを検証する
-    measure\t測定動作を行う
-    demag\t消磁動作
-    
-    status\t電源,磁界の状態を表示
-    gaussctl\tガウスメーター制御コマンド群
-    powerctl\tバイポーラ電源制御コマンド群
-    oectl 目標値 (単位)\t磁界制御
-    """)
-
-
 def gen_csv_header(filename: str) -> (str, datetime.datetime):
     """
     ログのヘッダを書き込む
@@ -732,6 +712,26 @@ def current_demag_cmd(cmd: List[str]) -> None:
     demag(step, field_mode=False)
     print("消磁終了")
     return
+
+
+def print_status():
+    print(load_status())
+    return
+
+
+def cmdlist():
+    print("""
+    quit\t通常終了
+    load FileName \t ./measure_sequence以下のFileNameの測定定義ファイルを読み込む
+    test\t読み込んだ測定定義ファイルを検証する
+    measure\t測定動作を行う
+    demag\t消磁動作
+
+    status\t電源,磁界の状態を表示
+    gaussctl\tガウスメーター制御コマンド群
+    powerctl\tバイポーラ電源制御コマンド群
+    oectl 目標値 (単位)\t磁界制御
+    """)
 
 
 def main() -> None:
