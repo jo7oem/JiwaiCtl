@@ -26,7 +26,7 @@ ELMG_MAGNET_FIELD_LIMIT: Final = 4150
 
 OECTL_LOOP_LIMIT: int = 8
 OECTL_BASE_COEFFICIENT: float = 1
-OECTL_RANGE_COEFFICIENT: float = 1
+OECTL_RANGE_COEFFICIENT: float = 0.16
 
 DB_NAME: Final = "setting.db"
 
@@ -606,7 +606,7 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
                     break
                 now_field = palfield
             diff_field = target - now_field
-            elmg_const = 1.0 - 0.16 * now_range
+            elmg_const = OECTL_BASE_COEFFICIENT - OECTL_RANGE_COEFFICIENT * now_range
             now_current = power.iset_fetch()
             next_current = Current(now_current.mA() + diff_field * elmg_const, "mA")
             continue
