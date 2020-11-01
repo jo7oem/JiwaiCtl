@@ -720,7 +720,15 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
             continue
         last_current = power.iset_fetch()
         return last_current
+
     elif CONNECT_MAGNET == "HELM":  # ヘルムホルツコイル制御部
+        return magnet_field_ctl_helmholtz(target)
+    else:
+        raise ValueError
+
+
+def magnet_field_ctl_helmholtz(target: int) -> Current:
+    if CONNECT_MAGNET == "HELM":  # ヘルムホルツコイル制御部
         if target > HELM_MAGNET_FIELD_LIMIT:
             logger.error("磁界制御入力値過大")
             print("最大磁界200Oe")
