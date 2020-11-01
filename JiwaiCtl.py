@@ -259,8 +259,16 @@ class MeasureSetting:  #
                 time.sleep(0.2)
             self.measure_lock_record(measure_seq[0], 0, 0, start_time, save_file)
 
+        lx = len(measure_seq)
+        loop = 0
         for target in measure_seq:
-            self.measure_lock_record(target, self.pre_lock_sec, self.post_lock_sec, start_time, save_file)
+            loop += 1
+            if loop == 1:
+                self.measure_lock_record(target, 0, self.post_lock_sec, start_time, save_file)
+            elif loop == lx:
+                self.measure_lock_record(target, self.pre_lock_sec, 0, start_time, save_file)
+            else:
+                self.measure_lock_record(target, self.pre_lock_sec, self.post_lock_sec, start_time, save_file)
 
         origin_time = datetime.datetime.now()
         next_time = origin_time + self.blocking_monitoring_td
