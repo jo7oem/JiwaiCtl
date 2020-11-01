@@ -697,7 +697,7 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
                 if palfield == now_field:
                     break
                 now_field = palfield
-                time.sleep(0.1)
+                time.sleep(0.2)
 
             # 次の設定値を算出
             diff_field = target - now_field
@@ -713,7 +713,7 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
                 if palfield == now_field:
                     break
                 now_field = palfield
-                time.sleep(0.1)
+                time.sleep(0.2)
             if loop_limit == 0:
                 break
             loop_limit -= 1
