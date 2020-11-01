@@ -245,6 +245,9 @@ class MeasureSetting:  #
         pre_block_end_time = origin_time + self.pre_block_td
         last_time = pre_block_end_time - self.blocking_monitoring_td
 
+        logger.debug("pre_block_end_time = {0}".format(pre_block_end_time))
+        logger.debug("last_time = {0}".format(last_time))
+        logger.debug("next_time = {0}".format(next_time))
         while next_time > last_time:
             logger.debug("next_time = {0}".format(next_time))
             while datetime.datetime.now() < next_time:
