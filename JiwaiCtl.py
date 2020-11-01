@@ -353,7 +353,8 @@ class MeasureSetting:  #
                 return
             if self.use_cache and (not self.is_cached):
                 self.cached_sequence.append(cache)
-        self.is_cached = True
+                self.is_cached = True
+        self.verified = True
         print("測定設定は検証されました。")
         power.set_iset(Current(0, "mA"))
         return
