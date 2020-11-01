@@ -622,8 +622,8 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
             is_diff_field_up = False
         elmg_const = (OECTL_BASE_COEFFICIENT - OECTL_RANGE_COEFFICIENT * now_range)
         next_current = now_current + Current(diff_field * elmg_const, "mA")
-        while (is_diff_field_up and (diff_field <= 1)) or (
-                (not is_diff_field_up) and (diff_field >= -1)):  # 目標磁界の1 Oe手前か超えたら制御成功とみなす
+        while (is_diff_field_up and (diff_field >= 1)) or (
+                (not is_diff_field_up) and (diff_field <= -1)):  # 目標磁界の1 Oe手前か超えたら制御成功とみなす
             loop_limit -= 1
             if now_current == next_current:
                 return next_current
