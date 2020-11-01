@@ -267,7 +267,7 @@ class MeasureSetting:  #
         lx = len(measure_seq)
         loop = 0
         for target in measure_seq:
-            c: Current = None
+            c: Current
             loop += 1
             if loop == 1:
                 c = self.measure_lock_record(target, 0, self.post_lock_sec, start_time, save_file)
@@ -328,8 +328,6 @@ class MeasureSetting:  #
         """
         測定設定ファイルを検証する
         """
-        self.cached_sequence.clear()
-        self.is_cached = False
         if self.have_error:
             logger.error("設定ファイルに致命的な問題あり")
             self.verified = False
@@ -338,7 +336,13 @@ class MeasureSetting:  #
             print("消磁中")
             demag()
             print("消磁完了")
-        for seq in self.measure_sequence:
+        sequence: List[List[Union[int, float, Current]]]
+        if self.is_cached and self.use_cache:
+            sequence = self.cached_sequence
+        else:
+            sequence = self.measure_sequence
+
+        for seq in sequence:
             start_time = datetime.datetime.now()
             print("測定開始:", start_time.strftime('%Y-%m-%d %H:%M:%S'))
             try:
@@ -347,7 +351,7 @@ class MeasureSetting:  #
                 logger.error("測定値指定が不正です")
                 self.verified = False
                 return
-            if self.use_cache:
+            if self.use_cache and (not self.is_cached):
                 self.cached_sequence.append(cache)
         self.is_cached = True
         print("測定設定は検証されました。")
@@ -420,6 +424,7 @@ class SettingDB:
     def seq_verified(self, b: bool):
         self.seq.verified = b
         self.db[self.now_hash] = b
+        self.save_db()
         return
 
 
