@@ -364,6 +364,7 @@ class SettingDB:
     db: Dict[str, int] = dict()
     seq: MeasureSetting = MeasureSetting(None, None)
     now_hash: str = None
+    loading_setting_path: str = None
 
     def __init__(self, filename: str):
         self.filepath = "./" + filename
@@ -395,6 +396,7 @@ class SettingDB:
 
     def load_measure_sequence(self, filename: str):
         json_path = os.path.abspath("./measure_sequence/" + filename)
+        self.loading_setting_path = json_path
         if not os.path.exists(json_path):
             logger.error("File not found! : {0} ".format(filename))
             return
@@ -420,6 +422,9 @@ class SettingDB:
         else:
             print("設定ファイルに未検証の要素有り. test 実行必須")
         return
+
+    def reload_measure_sequence(self):
+        self.load_measure_sequence(self.loading_setting_path)
 
     def seq_verified(self, b: bool):
         self.seq.verified = b
@@ -778,6 +783,7 @@ def cmdlist():
     print("""
     quit\t通常終了
     load FileName \t ./measure_sequence以下のFileNameの測定定義ファイルを読み込む
+    reload\t最後に読み込んだ測定定義ファイルを読み込む
     test\t読み込んだ測定定義ファイルを検証する
     measure\t測定動作を行う
     demag\t消磁動作
@@ -823,6 +829,9 @@ def main() -> None:
             continue
         elif cmd in {"load"}:
             DB.load_measure_sequence(request[1])
+            continue
+        elif cmd in {"reload"}:
+            DB.reload_measure_sequence()
             continue
         elif cmd in {"test"}:
             DB.seq.measure_test()
