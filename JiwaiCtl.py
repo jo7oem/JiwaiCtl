@@ -25,8 +25,8 @@ HELM_MAGNET_FIELD_LIMIT: Final = 150
 ELMG_MAGNET_FIELD_LIMIT: Final = 4150
 
 OECTL_LOOP_LIMIT: int = 12
-OECTL_BASE_COEFFICIENT: float = 1.05
-OECTL_RANGE_COEFFICIENT: float = 0.18
+OECTL_BASE_COEFFICIENT: float = 1.02
+OECTL_RANGE_COEFFICIENT: float = 0.15
 
 DB_NAME: Final = "setting.db"
 
@@ -616,6 +616,18 @@ def power_ctl(cmd: List[str]) -> None:
         return
 
 
+def get_suitable_range(field: Union[int, float]) -> int:
+    field = abs(field)
+    if abs(field) >= 2700:
+        return 0
+    elif abs(field) >= 270:
+        return 1
+    elif abs(field) >= 27:
+        return 2
+    else:
+        return 3
+
+
 def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
     """
     磁界制御を行う
@@ -630,22 +642,17 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
 
     :raise ValueError: 目標磁界が出力制限を超過する場合は命令を発行せずに例外を投げる
     """
-    next_range = 0
     if CONNECT_MAGNET == "ELMG":  # 電磁石制御部
         if target > ELMG_MAGNET_FIELD_LIMIT:
             logger.error("磁界制御入力値過大")
             print("最大磁界4.1kOe")
             raise ValueError
         now_range = gauss.range_fetch()
+        next_range = 0
+
         if auto_range:
-            if abs(target) >= 2700:
-                next_range = 0
-            elif abs(target) >= 270:
-                next_range = 1
-            elif abs(target) >= 27:
-                next_range = 2
-            else:
-                next_range = 3
+            next_range = get_suitable_range(target)
+
             if now_range == next_range:  # レンジを変えないとき
                 auto_range = False
                 pass
@@ -655,40 +662,42 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
                 gauss.range_set(next_range)
                 now_range = next_range
                 auto_range = False
-        # 初期差分算出
+                time.sleep(0.1)
         now_field = gauss.magnetic_field_fetch()
-        diff_field = target - now_field
-        loop_limit = OECTL_LOOP_LIMIT
-        if diff_field > 0:
-            is_diff_field_up = True
-        else:
-            is_diff_field_up = False
 
-        while (is_diff_field_up and (diff_field >= 1)) or (
-                (not is_diff_field_up) and (diff_field <= -1)):  # 目標磁界の1 Oe手前か超えたら制御成功とみなす
+        field_up: bool
+        if target - now_field > 0:
+            field_up = True
+        else:
+            field_up = False
+
+        loop_limit = OECTL_LOOP_LIMIT
+        while True:
+            while True:  # 磁界の一致を待つ
+                palfield = gauss.magnetic_field_fetch()
+                if palfield == now_field:
+                    break
+                now_field = palfield
+                time.sleep(0.2)
 
             if auto_range:  # レンジを下げる処理
+                r = get_suitable_range(now_field)
+
                 if next_range == 0:
                     auto_range = False
-                elif abs(now_field) >= 2700:
+
+                if r == now_range:
                     pass
-                elif abs(now_field) >= 270 and next_range >= 1:
-                    gauss.range_set(1)
-                    now_range = 1
-                    if next_range == 1:  # レンジ変更完了
+                if r > now_range:
+                    if r == next_range:
+                        gauss.range_set(next_range)
+                        now_range = r
                         auto_range = False
-
-                elif abs(now_field) >= 27 and next_range >= 2:
-                    gauss.range_set(2)
-                    now_range = 2
-                    if next_range == 2:  # レンジ変更完了
-                        auto_range = False
-
-                elif abs(now_field) < 17 and next_range == 3:
-                    gauss.range_set(3)
-                    now_range = 3
-                    auto_range = False
-
+                    elif r < next_range:
+                        gauss.range_set(r)
+                        now_range = r
+                    else:
+                        pass
                 else:
                     pass
 
@@ -699,25 +708,29 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
                 now_field = palfield
                 time.sleep(0.2)
 
-            # 次の設定値を算出
+            if loop_limit == 0:
+                break
+            loop_limit -= 1
+
             diff_field = target - now_field
+
+            if field_up and diff_field <= 1:
+                break
+            if (not field_up) and diff_field >= -1:
+                break
+
             elmg_const = OECTL_BASE_COEFFICIENT - OECTL_RANGE_COEFFICIENT * now_range
+
+            # 次の設定値を算出
             now_current = power.iset_fetch()
             next_current = now_current + Current(diff_field * elmg_const, "mA")
             if now_current == next_current:
                 return next_current
             power.set_iset(next_current)
 
-            while True:  # 磁界の一致を待つ
-                palfield = gauss.magnetic_field_fetch()
-                if palfield == now_field:
-                    break
-                now_field = palfield
-                time.sleep(0.2)
-            if loop_limit == 0:
-                break
-            loop_limit -= 1
             continue
+
+        # 初期差分算出
         last_current = power.iset_fetch()
         return last_current
 
