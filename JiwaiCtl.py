@@ -643,11 +643,11 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
                     pass
 
             while True:  # 磁界の一致を待つ
-                time.sleep(0.1)
                 palfield = gauss.magnetic_field_fetch()
                 if palfield == now_field:
                     break
                 now_field = palfield
+                time.sleep(0.1)
 
             # 次の設定値を算出
             diff_field = target - now_field
@@ -657,13 +657,6 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
             if now_current == next_current:
                 return next_current
             power.set_iset(next_current)
-
-            while True:  # 磁界の一致を待つ
-                time.sleep(0.1)
-                palfield = gauss.magnetic_field_fetch()
-                if palfield == now_field:
-                    break
-                now_field = palfield
 
             if loop_limit == 0:
                 break
