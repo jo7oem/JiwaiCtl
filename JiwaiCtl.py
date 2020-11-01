@@ -596,9 +596,9 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
             raise ValueError
         now_range = gauss.range_fetch()
         if auto_range:
-            if abs(target) >= 2500:
+            if abs(target) >= 3000:
                 next_range = 0
-            elif abs(target) >= 250:
+            elif abs(target) >= 300:
                 next_range = 1
             else:
                 next_range = 2
@@ -624,23 +624,30 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
                 (not is_diff_field_up) and (diff_field <= -1)):  # 目標磁界の1 Oe手前か超えたら制御成功とみなす
 
             if auto_range:  # レンジを下げる処理
-                if abs(now_field) >= 3000 and next_range == 0:
+                if next_range == 0:
+                    auto_range = False
+                elif abs(now_field) >= 3000:
                     pass
                 elif abs(now_field) >= 300 and next_range >= 1:
                     gauss.range_set(1)
                     now_range = 1
-                    now_field = gauss.magnetic_field_fetch()
                     if next_range == 1:  # レンジ変更完了
                         auto_range = False
 
                 elif abs(now_field) < 300 and next_range == 2:
                     gauss.range_set(2)
                     now_range = 2
-                    now_field = gauss.magnetic_field_fetch()
                     auto_range = False
 
                 else:
                     pass
+
+            while True:  # 磁界の一致を待つ
+                time.sleep(0.1)
+                palfield = gauss.magnetic_field_fetch()
+                if palfield == now_field:
+                    break
+                now_field = palfield
 
             # 次の設定値を算出
             diff_field = target - now_field
@@ -652,7 +659,7 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
             power.set_iset(next_current)
 
             while True:  # 磁界の一致を待つ
-                time.sleep(0.2)
+                time.sleep(0.1)
                 palfield = gauss.magnetic_field_fetch()
                 if palfield == now_field:
                     break
