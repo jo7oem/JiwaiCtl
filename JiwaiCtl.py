@@ -394,9 +394,13 @@ class SettingDB:
         self.now_hash = m.hexdigest()
         return self.now_hash
 
-    def load_measure_sequence(self, filename: str):
-        json_path = os.path.abspath("./measure_sequence/" + filename)
-        self.loading_setting_path = json_path
+    def load_measure_sequence(self, filename: str, abspath: bool = False):
+        if not abspath:
+            json_path = os.path.abspath("./measure_sequence/" + filename)
+            self.loading_setting_path = json_path
+        else:
+            json_path = filename
+
         if not os.path.exists(json_path):
             logger.error("File not found! : {0} ".format(filename))
             return
@@ -424,7 +428,7 @@ class SettingDB:
         return
 
     def reload_measure_sequence(self):
-        self.load_measure_sequence(self.loading_setting_path)
+        self.load_measure_sequence(self.loading_setting_path, True)
 
     def seq_verified(self, b: bool):
         self.seq.verified = b
