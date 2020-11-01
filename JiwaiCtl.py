@@ -409,6 +409,13 @@ class SettingDB:
             logger.error("File not found! : {0} ".format(filename))
             return
 
+        try:
+            with open(json_path, "r") as f:
+                seq = json.load(f)
+        except json.JSONDecodeError:
+            logger.error("設定ファイルの読み込み失敗 JSONファイルの構造を確認 ")
+            return
+        self.seq = MeasureSetting(seq)
         self.hash_check(json_path)
         if (key := self.now_hash) in self.db:
             if self.db[key]:
@@ -418,13 +425,6 @@ class SettingDB:
                 logger.info("設定ファイルの変更検知 {0}".format(json_path))
         else:
             logger.info("新しい設定ファイル {0}".format(json_path))
-        try:
-            with open(json_path, "r") as f:
-                seq = json.load(f)
-        except json.JSONDecodeError:
-            logger.error("設定ファイルの読み込み失敗 JSONファイルの構造を確認 ")
-            return
-        self.seq = MeasureSetting(seq)
         if self.seq.verified:
             print("設定ファイルは検証済み")
         else:
