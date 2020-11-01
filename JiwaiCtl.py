@@ -114,6 +114,11 @@ class MeasureSetting:  #
             self.have_error = True
 
         # options
+        if (key := "use_cache") in seq_dict:
+            try:
+                self.use_cache = bool(seq_dict[key])
+            except ValueError:
+                self.log_invalid_value(key, seq_dict[key], WARNING)
 
         if (key := "autorange") in seq_dict:
             try:
@@ -338,6 +343,7 @@ class MeasureSetting:  #
             print("消磁完了")
         sequence: List[List[Union[int, float, Current]]]
         if self.is_cached and self.use_cache:
+            print("cached")
             sequence = self.cached_sequence
         else:
             sequence = self.measure_sequence
