@@ -57,6 +57,7 @@ class MeasureSetting:  #
 
     is_cached: bool = False
     cached_sequence: List[List[int]] = []
+    cached_range: List[List[int]] = []
 
     @staticmethod
     def log_key_notfound(key: str, level: int = DEBUG) -> None:
@@ -599,12 +600,14 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
             raise ValueError
         now_range = gauss.range_fetch()
         if auto_range:
-            if abs(target) >= 3000:
+            if abs(target) >= 2700:
                 next_range = 0
-            elif abs(target) >= 300:
+            elif abs(target) >= 270:
                 next_range = 1
-            else:
+            elif abs(target) >= 27:
                 next_range = 2
+            else:
+                next_range = 3
             if now_range == next_range:  # レンジを変えないとき
                 auto_range = False
                 pass
@@ -629,17 +632,23 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
             if auto_range:  # レンジを下げる処理
                 if next_range == 0:
                     auto_range = False
-                elif abs(now_field) >= 3000:
+                elif abs(now_field) >= 2700:
                     pass
-                elif abs(now_field) >= 300 and next_range >= 1:
+                elif abs(now_field) >= 270 and next_range >= 1:
                     gauss.range_set(1)
                     now_range = 1
                     if next_range == 1:  # レンジ変更完了
                         auto_range = False
 
-                elif abs(now_field) < 300 and next_range == 2:
+                elif abs(now_field) >= 27 and next_range >= 2:
                     gauss.range_set(2)
                     now_range = 2
+                    if next_range == 2:  # レンジ変更完了
+                        auto_range = False
+
+                elif abs(now_field) < 17 and next_range == 3:
+                    gauss.range_set(3)
+                    now_range = 3
                     auto_range = False
 
                 else:
@@ -661,6 +670,12 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
                 return next_current
             power.set_iset(next_current)
 
+            while True:  # 磁界の一致を待つ
+                palfield = gauss.magnetic_field_fetch()
+                if palfield == now_field:
+                    break
+                now_field = palfield
+                time.sleep(0.1)
             if loop_limit == 0:
                 break
             loop_limit -= 1
