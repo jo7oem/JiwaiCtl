@@ -659,6 +659,7 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
                 palfield = gauss.magnetic_field_fetch()
                 if palfield == now_field:
                     break
+                now_field = palfield
             continue
         last_current = power.iset_fetch()
         return last_current
