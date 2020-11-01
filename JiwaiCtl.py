@@ -287,7 +287,10 @@ class MeasureSetting:  #
         lx = len(measure_seq)
         loop = 0
         for target in measure_seq:
-            mes_range = chached_range[loop]
+            if chached_range is None:
+                mes_range = None
+            else:
+                mes_range = chached_range[loop]
             c: Current
             loop += 1
             if loop == 1:
