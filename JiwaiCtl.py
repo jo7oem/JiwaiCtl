@@ -47,6 +47,7 @@ class MeasureSetting:  #
     blocking_monitoring_sec: float = 5  # ブロック動作を行っているときにモニタリングを行う間隔
     blocking_monitoring_td: datetime.timedelta = datetime.timedelta(seconds=5)
 
+    autorange: bool = False
     use_cache: bool = False
 
     # 以下状態管理変数
@@ -113,6 +114,16 @@ class MeasureSetting:  #
             self.have_error = True
 
         # options
+
+        if (key := "autorange") in seq_dict:
+            try:
+                self.autorange = bool(seq_dict[key])
+            except ValueError:
+                self.log_invalid_value(key, seq_dict[key], WARNING)
+        else:
+            if self.control_mode == "oectl":
+                self.log_use_default(key, self.pre_lock_sec)
+                self.verified = False
 
         if (key := "pre_lock_sec") in seq_dict:
             minimum = 0.1
@@ -210,7 +221,7 @@ class MeasureSetting:  #
             current = Current(target, "mA")
             power.set_iset(current)
         elif self.control_mode == "oectl":
-            current = magnet_field_ctl(target, True)
+            current = magnet_field_ctl(target, self.autorange)
 
         time.sleep(pre_lock_time)
         status = load_status()
@@ -239,7 +250,11 @@ class MeasureSetting:  #
         pre_block_end_time = origin_time + self.pre_block_td
         last_time = pre_block_end_time - self.blocking_monitoring_td
 
-        while next_time > last_time:
+        logger.debug("pre_block_end_time = {0}".format(pre_block_end_time))
+        logger.debug("last_time = {0}".format(last_time))
+        logger.debug("next_time = {0}".format(next_time))
+        while next_time < last_time:
+            logger.debug("next_time = {0}".format(next_time))
             while datetime.datetime.now() < next_time:
                 time.sleep(0.2)
             self.measure_lock_record(measure_seq[0], 0, 0, start_time, save_file)
@@ -249,8 +264,17 @@ class MeasureSetting:  #
                 time.sleep(0.2)
             self.measure_lock_record(measure_seq[0], 0, 0, start_time, save_file)
 
+        lx = len(measure_seq)
+        loop = 0
         for target in measure_seq:
-            c = self.measure_lock_record(target, self.pre_lock_sec, self.post_lock_sec, start_time, save_file)
+            c: Current = None
+            loop += 1
+            if loop == 1:
+                c = self.measure_lock_record(target, 0, self.post_lock_sec, start_time, save_file)
+            elif loop == lx:
+                c = self.measure_lock_record(target, self.pre_lock_sec, 0, start_time, save_file)
+            else:
+                c = self.measure_lock_record(target, self.pre_lock_sec, self.post_lock_sec, start_time, save_file)
             res_current.append(c)
 
         origin_time = datetime.datetime.now()
@@ -258,7 +282,7 @@ class MeasureSetting:  #
         post_block_end_time = origin_time + self.post_block_td
         last_time = post_block_end_time - self.blocking_monitoring_td
 
-        while next_time > last_time:
+        while next_time < last_time:
             while datetime.datetime.now() < next_time:
                 time.sleep(0.2)
             self.measure_lock_record(measure_seq[-1], 0, 0, start_time, save_file)
@@ -370,26 +394,27 @@ class SettingDB:
         if not os.path.exists(json_path):
             logger.error("File not found! : {0} ".format(filename))
             return
+
+        self.hash_check(json_path)
+        if (key := self.now_hash) in self.db:
+            if self.db[key]:
+                logger.info("検証済み設定ファイル {0}".format(json_path))
+                self.seq.verified = True
+            else:
+                logger.info("設定ファイルの変更検知 {0}".format(json_path))
+        else:
+            logger.info("新しい設定ファイル {0}".format(json_path))
         try:
             with open(json_path, "r") as f:
                 seq = json.load(f)
         except json.JSONDecodeError:
             logger.error("設定ファイルの読み込み失敗 JSONファイルの構造を確認 ")
             return
-
-        self.hash_check(json_path)
         self.seq = MeasureSetting(seq)
-        if (key := self.now_hash) in self.db:
-            if self.db[key]:
-                logger.info("検証済み設定ファイル {0}".format(json_path))
-                self.seq.verified = True
-                print("設定ファイルは検証済み")
-            else:
-                logger.info("設定ファイルの変更検知 {0}".format(json_path))
-                print("設定ファイルに変更あり test 実行必須")
+        if self.seq.verified:
+            print("設定ファイルは検証済み")
         else:
-            logger.info("新しい設定ファイル {0}".format(json_path))
-            print("設定ファイルに変更あり test 実行必須")
+            print("設定ファイルに未検証の要素有り. test 実行必須")
         return
 
     def seq_verified(self, b: bool):
@@ -551,7 +576,7 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
     next_range = 0
     if CONNECT_MAGNET == "ELMG":  # 電磁石制御部
         if target > ELMG_MAGNET_FIELD_LIMIT:
-            print("[Error]\t磁界制御入力値過大")
+            logger.error("磁界制御入力値過大")
             print("最大磁界4.1kOe")
             raise ValueError
         now_range = gauss.range_fetch()
@@ -562,16 +587,16 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
                 next_range = 1
             else:
                 next_range = 2
-            if now_range == next_range:
+            if now_range == next_range:  # レンジを変えないとき
                 auto_range = False
                 pass
-            elif now_range < next_range:
+            elif now_range < next_range:  # レンジを下げる方向
                 pass
-            else:
+            else:  # レンジを上げる
                 gauss.range_set(next_range)
                 now_range = next_range
-                time.sleep(0.5)
                 auto_range = False
+        # 初期差分算出
         now_field = gauss.magnetic_field_fetch()
         diff_field = target - now_field
         now_current = power.iset_fetch()
@@ -588,19 +613,22 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
             if now_current == next_current:
                 return next_current
             power.set_iset(next_current)
-            time.sleep(0.1)
-            now_field = gauss.magnetic_field_fetch()
-
+            while True:  # 磁界の一致を待つ
+                time.sleep(0.1)
+                palfield = gauss.magnetic_field_fetch()
+                if palfield == now_field:
+                    break
+                now_field = palfield
             if loop_limit == 0:
                 break
-            if auto_range:
+            if auto_range:  # レンジを下げる処理
                 if abs(now_field) >= 3000 and next_range == 0:
                     pass
                 elif abs(now_field) >= 300 and next_range >= 1:
                     gauss.range_set(1)
                     now_range = 1
                     now_field = gauss.magnetic_field_fetch()
-                    if next_range == 1:
+                    if next_range == 1:  # レンジ変更完了
                         auto_range = False
 
                 elif abs(now_field) < 300 and next_range == 2:
@@ -612,12 +640,7 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
                 else:
                     pass
 
-            while True:
-                time.sleep(0.1)
-                palfield = gauss.magnetic_field_fetch()
-                if palfield == now_field:
-                    break
-                now_field = palfield
+            # 次の設定値を算出
             diff_field = target - now_field
             elmg_const = OECTL_BASE_COEFFICIENT - OECTL_RANGE_COEFFICIENT * now_range
             now_current = power.iset_fetch()
@@ -627,7 +650,7 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
         return last_current
     elif CONNECT_MAGNET == "HELM":  # ヘルムホルツコイル制御部
         if target > HELM_MAGNET_FIELD_LIMIT:
-            logger.error("[Error]\t磁界制御入力値過大")
+            logger.error("磁界制御入力値過大")
             print("最大磁界200Oe")
             raise ValueError
         target_current = Current(int(target / HELM_Oe2CURRENT_CONST), "mA")
