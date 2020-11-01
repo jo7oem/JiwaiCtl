@@ -248,7 +248,7 @@ class MeasureSetting:  #
         logger.debug("pre_block_end_time = {0}".format(pre_block_end_time))
         logger.debug("last_time = {0}".format(last_time))
         logger.debug("next_time = {0}".format(next_time))
-        while next_time > last_time:
+        while next_time < last_time:
             logger.debug("next_time = {0}".format(next_time))
             while datetime.datetime.now() < next_time:
                 time.sleep(0.2)
@@ -267,7 +267,7 @@ class MeasureSetting:  #
         post_block_end_time = origin_time + self.post_block_td
         last_time = post_block_end_time - self.blocking_monitoring_td
 
-        while next_time > last_time:
+        while next_time < last_time:
             while datetime.datetime.now() < next_time:
                 time.sleep(0.2)
             self.measure_lock_record(measure_seq[-1], 0, 0, start_time, save_file)
