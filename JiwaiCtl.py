@@ -56,7 +56,7 @@ class MeasureSetting:  #
     filepath: str = None
 
     is_cached: bool = False
-    cached_sequence: List[List[Current]] = []
+    cached_sequence: List[List[int]] = []
 
     @staticmethod
     def log_key_notfound(key: str, level: int = DEBUG) -> None:
@@ -215,14 +215,11 @@ class MeasureSetting:  #
 
         return
 
-    def measure_lock_record(self, target: Union[float, int, Current], pre_lock_time: float, post_lock_time: float,
+    def measure_lock_record(self, target: Union[float, int], pre_lock_time: float, post_lock_time: float,
                             start_time: datetime.datetime, save_file: str = None) -> Current:
         current = None
-        if self.is_cached and self.use_cache:
-            current = target
-            power.set_iset(current)
 
-        elif self.control_mode == "current":
+        if self.control_mode == "current" or (self.is_cached and self.use_cache):
             current = Current(target, "mA")
             power.set_iset(current)
         elif self.control_mode == "oectl":
@@ -238,8 +235,8 @@ class MeasureSetting:  #
         time.sleep(post_lock_time)
         return current
 
-    def measure_process(self, measure_seq: List[Union[int, float, Current]], start_time: datetime.datetime,
-                        save_file: str = None) -> List[Current]:
+    def measure_process(self, measure_seq: List[Union[int, float]], start_time: datetime.datetime,
+                        save_file: str = None) -> List[int]:
         """
         測定シークエンスに従って測定を実施する
 
@@ -248,7 +245,7 @@ class MeasureSetting:  #
         :param save_file: ログファイル名
         """
 
-        res_current: List[Current] = []
+        res_current: List[int] = []
         self.measure_lock_record(measure_seq[0], self.pre_lock_sec, 0, start_time, save_file)
         origin_time = datetime.datetime.now()
         next_time = origin_time + self.blocking_monitoring_td
@@ -280,7 +277,7 @@ class MeasureSetting:  #
                 c = self.measure_lock_record(target, self.pre_lock_sec, 0, start_time, save_file)
             else:
                 c = self.measure_lock_record(target, self.pre_lock_sec, self.post_lock_sec, start_time, save_file)
-            res_current.append(c)
+            res_current.append(c.mA())
 
         origin_time = datetime.datetime.now()
         next_time = origin_time + self.blocking_monitoring_td
