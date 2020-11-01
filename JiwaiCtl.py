@@ -378,16 +378,20 @@ class MeasureSetting:  #
             sequence = self.cached_sequence
         else:
             sequence = self.measure_sequence
-
+        i = 0
         for seq in sequence:
             start_time = datetime.datetime.now()
             print("測定開始:", start_time.strftime('%Y-%m-%d %H:%M:%S'))
             try:
-                cache_c, cache_r = self.measure_process(seq, start_time)
+                if self.use_cache and self.is_cached and self.autorange:
+                    cache_c, cache_r = self.measure_process(seq, start_time, chached_range=self.cached_range[i])
+                else:
+                    cache_c, cache_r = self.measure_process(seq, start_time)
             except ValueError:
                 logger.error("測定値指定が不正です")
                 self.verified = False
                 return
+            i += 1
             if self.use_cache and (not self.is_cached):
                 self.cached_sequence.append(cache_c)
                 self.cached_range.append(cache_r)
