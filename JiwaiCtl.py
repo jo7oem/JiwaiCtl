@@ -731,14 +731,18 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
             # 次の設定値を算出
             now_current = power.iset_fetch()
             next_current = now_current + Current(diff_field * elmg_const, "mA")
-            if now_current == next_current:
-                return next_current
+            if abs(now_current - next_current) < 1:
+                break
             power.set_iset(next_current)
 
             continue
 
         # 初期差分算出
         last_current = power.iset_fetch()
+        now_field = gauss.magnetic_field_fetch()
+        diff_field = target - now_field
+        if abs(diff_field) > 2:
+            last_current = Current(last_current.mA() + diff_field * 0.9, "mA")
         return last_current
 
     elif CONNECT_MAGNET == "HELM":  # ヘルムホルツコイル制御部
