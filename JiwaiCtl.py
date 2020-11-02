@@ -942,9 +942,9 @@ def main() -> None:
 def search_magnet() -> None:
     global CONNECT_MAGNET
     while True:
-        power.set_iset(Current(200, "mA"))
-        time.sleep(0.2)
-        resistance = power.vout_fetch() / power.iout_fetch().A()
+        power.set_iset(Current(400, "mA"))
+        time.sleep(0.3)
+        resistance: float = power.vout_fetch() / power.iout_fetch().A()
         if resistance > 4:
             now = "ELMG"
         else:
