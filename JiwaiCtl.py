@@ -672,11 +672,11 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
                 time.sleep(0.1)
         now_field = gauss.magnetic_field_fetch()
 
-        field_up: bool
+        field_up: int
         if target - now_field > 0:
-            field_up = True
+            field_up = 1
         else:
-            field_up = False
+            field_up = -1
 
         loop_limit = OECTL_LOOP_LIMIT
         while True:
@@ -721,9 +721,9 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
 
             diff_field = target - now_field
 
-            if field_up and diff_field <= 1:
+            if field_up == 1 and diff_field <= 1:
                 break
-            if (not field_up) and diff_field >= -1:
+            if not field_up == -1 and diff_field >= -1:
                 break
 
             elmg_const = OECTL_BASE_COEFFICIENT - OECTL_RANGE_COEFFICIENT * now_range
@@ -742,7 +742,8 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
         now_field = gauss.magnetic_field_fetch()
         diff_field = target - now_field
         if abs(diff_field) > 2:
-            last_current = Current(last_current.mA() + diff_field * 0.9, "mA")
+            last_current = last_current + Current(diff_field * 0.9, "mA")
+        last_current = last_current + Current(4 * field_up, "mA")
         return last_current
 
     elif CONNECT_MAGNET == "HELM":  # ヘルムホルツコイル制御部
