@@ -804,7 +804,9 @@ def demag(step: int = 15, field_mode: bool = True):
     for i in range(0, step):
         print("Step: " + str(i + 1) + "/" + str(step))
         flag = flag * -1
-        power.set_iset(Current(flag * (step - i) / step * max_current.mA(), "mA"))
+        x = 1 - float(i) / float(step)
+        nc = max_current.mA() * (x ** 2)
+        power.set_iset(Current(nc, "mA"))
         time.sleep(0.5)
 
     power.set_iset(Current(0, "mA"))
