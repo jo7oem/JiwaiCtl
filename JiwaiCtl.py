@@ -741,7 +741,7 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
         last_current = power.iset_fetch()
         now_field = gauss.magnetic_field_fetch()
         diff_field = target - now_field
-        if abs(diff_field) > 2:
+        if abs(diff_field) >= 1:
             last_current = last_current + Current(diff_field * 0.9, "mA")
         last_current = last_current + Current(-(5 + now_range / 2) * field_up, "mA")
         return last_current
