@@ -265,6 +265,12 @@ class MeasureSetting:  #
         time.sleep(post_lock_time)
         return current
 
+    def remove_cache(self):
+        self.cached_range = []
+        self.cached_sequence = []
+        self.is_cached = False
+        return
+
     def measure_process(self, measure_seq: List[Union[int, float]], start_time: datetime.datetime,
                         save_file: str = None, chached_range: Union[List[int]] = None) -> (List[int], List[int]):
         """
@@ -442,6 +448,9 @@ class SettingDB:
     now_hash: str = None
     loading_setting_path: str = None
 
+    cached_seq: Dict[str, List[List[int]]] = dict()
+    cached_range: Dict[str, List[List[int]]] = dict()
+
     def __init__(self, filename: str):
         self.filepath = "./" + filename
         self.load_db()
@@ -471,6 +480,7 @@ class SettingDB:
         return self.now_hash
 
     def load_measure_sequence(self, filename: str, abspath: bool = False):
+        self.save_cache()
         if not abspath:
             json_path = os.path.abspath("./measure_sequence/" + filename)
             self.loading_setting_path = json_path
@@ -499,17 +509,38 @@ class SettingDB:
             logger.info("新しい設定ファイル {0}".format(json_path))
         if self.seq.verified:
             print("設定ファイルは検証済み")
+            if self.seq.use_cache:
+                self.load_cache()
+                print("測定キャッシュ読み込み完了")
         else:
             print("設定ファイルに未検証の要素有り. test 実行必須")
         return
 
     def reload_measure_sequence(self):
+        self.seq.remove_cache()
         self.load_measure_sequence(self.loading_setting_path, True)
+        return
 
     def seq_verified(self, b: bool):
         self.seq.verified = b
         self.db[self.now_hash] = b
         self.save_db()
+        return
+
+    def save_cache(self):
+        if (not self.seq.verified) or (not self.seq.use_cache) or (not self.seq.is_cached):
+            return
+
+        self.cached_seq[self.now_hash] = self.seq.cached_sequence
+        self.cached_range[self.now_hash] = self.seq.cached_range
+        return
+
+    def load_cache(self):
+        if not self.seq.verified:
+            return
+
+        self.seq.cached_sequence = self.cached_seq[self.now_hash]
+        self.seq.cached_range = self.cached_range[self.now_hash]
         return
 
 
