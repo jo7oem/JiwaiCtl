@@ -398,11 +398,11 @@ class MeasureSetting:  #
                 cache_lc.append(cache_c)
                 cache_lr.append(cache_r)
 
-        self.cached_sequence = cache_lc
-        self.cached_range = cache_lr
         self.verified = True
         if self.use_cache and (not self.is_cached):
             self.is_cached = True
+            self.cached_sequence = cache_lc
+            self.cached_range = cache_lr
 
         print("測定設定は検証されました。")
         power.set_iset(Current(0, "mA"))
