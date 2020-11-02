@@ -743,7 +743,7 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
         diff_field = target - now_field
         if abs(diff_field) > 2:
             last_current = last_current + Current(diff_field * 0.9, "mA")
-        last_current = last_current + Current(-4 * field_up, "mA")
+        last_current = last_current + Current(-(5 + now_range / 2) * field_up, "mA")
         return last_current
 
     elif CONNECT_MAGNET == "HELM":  # ヘルムホルツコイル制御部
