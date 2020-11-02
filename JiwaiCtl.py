@@ -33,6 +33,7 @@ DB_NAME: Final = "setting.db"
 
 class MeasureSetting:  #
     force_demag: bool = False  # 測定前に消磁を強制するかどうか
+    demag_step: int = 15
     control_mode: str = "oectl"  # 制御モード "oectl":磁界制御, "current":電流制御
 
     measure_sequence: List[List[Union[int, float]]] = [[]]  # 測定シークエンス
@@ -139,6 +140,16 @@ class MeasureSetting:  #
         else:
             self.log_use_default(key, self.force_demag)
             self.verified = False
+
+        if (key := "demag_step") in seq_dict:
+            try:
+                self.demag_step = int(seq_dict[key])
+            except ValueError:
+                self.log_invalid_value(key, seq_dict[key], WARNING)
+
+            if self.demag_step < 1:
+                self.log_invalid_value(key, seq_dict[key], ERROR)
+                self.have_error = True
 
         if (key := "pre_lock_sec") in seq_dict:
             minimum = 0.1
@@ -342,8 +353,11 @@ class MeasureSetting:  #
             print("設定ファイルの検証を行ってください。")
             return
         if self.force_demag:
+            oe_mode = True
+            if self.control_mode == "current":
+                oe_mode = False
             print("消磁中")
-            demag()
+            demag(self.demag_step, oe_mode)
             print("消磁完了")
         if self.use_cache and self.is_cached:
             sequence = self.cached_sequence
@@ -378,8 +392,11 @@ class MeasureSetting:  #
             self.verified = False
             return
         if self.force_demag:
+            oe_mode = True
+            if self.control_mode == "current":
+                oe_mode = False
             print("消磁中")
-            demag()
+            demag(self.demag_step, oe_mode)
             print("消磁完了")
         sequence: List[List[Union[int, float, Current]]]
         cache_lr: List[List[int]] = []
