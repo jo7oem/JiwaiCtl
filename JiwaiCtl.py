@@ -131,6 +131,15 @@ class MeasureSetting:  #
                 self.log_use_default(key, self.pre_lock_sec)
                 self.verified = False
 
+        if (key := "demag") in seq_dict:
+            try:
+                self.force_demag = bool(seq_dict[key])
+            except ValueError:
+                self.log_invalid_value(key, seq_dict[key], WARNING)
+        else:
+            self.log_use_default(key, self.force_demag)
+            self.verified = False
+
         if (key := "pre_lock_sec") in seq_dict:
             minimum = 0.1
             try:
