@@ -373,6 +373,8 @@ class MeasureSetting:  #
             demag()
             print("消磁完了")
         sequence: List[List[Union[int, float, Current]]]
+        cache_lr: List[List[int]] = []
+        cache_lc: List[List[int]] = []
         if self.is_cached and self.use_cache:
             print("cached")
             sequence = self.cached_sequence
@@ -393,10 +395,15 @@ class MeasureSetting:  #
                 return
             i += 1
             if self.use_cache and (not self.is_cached):
-                self.cached_sequence.append(cache_c)
-                self.cached_range.append(cache_r)
-                self.is_cached = True
+                cache_lc.append(cache_c)
+                cache_lr.append(cache_r)
+
+        self.cached_sequence = cache_lc
+        self.cached_range = cache_lr
         self.verified = True
+        if self.use_cache and (not self.is_cached):
+            self.is_cached = True
+
         print("測定設定は検証されました。")
         power.set_iset(Current(0, "mA"))
         return
