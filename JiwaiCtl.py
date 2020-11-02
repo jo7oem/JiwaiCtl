@@ -30,6 +30,10 @@ OECTL_RANGE_COEFFICIENT: float = 0.12
 
 DB_NAME: Final = "setting.db"
 
+MEASURE_RECORD_BASE_DIR: Final = "./logs/"
+MEASURE_RECORD_DIR_NAME: Final = datetime.datetime.now().strftime("%Y%m%d")
+MEASURE_RECORD_DIR: Final = os.path.join(os.path.abspath(MEASURE_RECORD_BASE_DIR), MEASURE_RECORD_DIR_NAME)
+
 
 class MeasureSetting:  #
     force_demag: bool = False  # 測定前に消磁を強制するかどうか
@@ -568,9 +572,8 @@ def gen_csv_header(filename: str) -> (str, datetime.datetime):
     :param filename:
     :return: 基準時刻
     """
-    if not os.path.exists('logs'):
-        os.mkdir('logs')
-    file_path = "logs/" + filename
+    os.makedirs(MEASURE_RECORD_DIR, exist_ok=True)
+    file_path = os.path.join(MEASURE_RECORD_DIR, filename)
     print("測定条件等メモ記入欄")
     memo = input("memo :")
     start_time = datetime.datetime.now()
