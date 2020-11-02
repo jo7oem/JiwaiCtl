@@ -723,7 +723,7 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
 
             if field_up == 1 and diff_field <= 1:
                 break
-            if not field_up == -1 and diff_field >= -1:
+            if field_up == -1 and diff_field >= -1:
                 break
 
             elmg_const = OECTL_BASE_COEFFICIENT - OECTL_RANGE_COEFFICIENT * now_range
