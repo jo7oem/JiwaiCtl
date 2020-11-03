@@ -796,19 +796,24 @@ def magnet_field_ctl_helmholtz(target: int) -> Current:
 
 def demag(step: int = 15, field_mode: bool = True):
     if CONNECT_MAGNET == "ELMG" and field_mode:
-        max_current = magnet_field_ctl(4000, True)
+        max_current = magnet_field_ctl(4000, True).mA()
     elif CONNECT_MAGNET == "ELMG" and (not field_mode):
-        max_current = Current(4300, "mA")
+        max_current = 4300
+        power.set_iset(Current(max_current, "mA"))
     elif CONNECT_MAGNET == "HELM":
-        max_current = magnet_field_ctl(100, True)
+        max_current = magnet_field_ctl(100, True).mA()
     else:
         raise ValueError
+    time.sleep(1.0)
     flag = 1
+    max_current = float(max_current)
     for i in range(0, step):
         print("Step: " + str(i + 1) + "/" + str(step))
         flag = flag * -1
-        power.set_iset(Current(flag * (step - i) / step * max_current.mA(), "mA"))
-        time.sleep(0.5)
+        x = 1 - (float(i) / float(step))
+        nc = flag * max_current * (x ** 2)
+        power.set_iset(Current(nc, "mA"))
+        time.sleep(1.0)
 
     power.set_iset(Current(0, "mA"))
     return
