@@ -511,7 +511,6 @@ class SettingDB:
             print("設定ファイルは検証済み")
             if self.seq.use_cache:
                 self.load_cache()
-                print("測定キャッシュ読み込み完了")
         else:
             print("設定ファイルに未検証の要素有り. test 実行必須")
         return
@@ -543,6 +542,7 @@ class SettingDB:
 
         self.seq.cached_sequence = self.cached_seq[self.now_hash]
         self.seq.cached_range = self.cached_range[self.now_hash]
+        print("測定キャッシュ読み込み完了")
         return
 
 
