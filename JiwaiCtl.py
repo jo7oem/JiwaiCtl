@@ -515,6 +515,29 @@ class SettingDB:
             print("設定ファイルに未検証の要素有り. test 実行必須")
         return
 
+    def multi_load(self, args: List[str]):
+        if len(args) == 0:
+            print("引数が与えられていない")
+            return
+
+        for p in args:
+            print("loading : {0}".format(p))
+            self.load_measure_sequence(p)
+            if self.seq.have_error:
+                raise ValueError
+
+        for p in args:
+            print("testing : {0}".format(p))
+            self.load_measure_sequence(p)
+            if not self.seq.verified or (self.seq.use_cache and (not self.seq.use_cache)):
+                self.seq.measure_test()
+
+            if not self.seq.verified:
+                raise ValueError
+
+        print("読み込み完了")
+        return
+
     def reload_measure_sequence(self):
         self.seq.remove_cache()
         self.load_measure_sequence(self.loading_setting_path, True)
@@ -939,6 +962,7 @@ def cmdlist():
     quit\t通常終了
     load FileName \t ./measure_sequence以下のFileNameの測定定義ファイルを読み込む
     reload\t最後に読み込んだ測定定義ファイルを読み込む
+    multi_load \t ./measure_sequence以下のFileNameの測定定義ファイルを複数読み込みテストする 
     test\t読み込んだ測定定義ファイルを検証する
     measure\t測定動作を行う
     demag\t消磁動作
@@ -987,6 +1011,12 @@ def main() -> None:
             continue
         elif cmd in {"reload"}:
             DB.reload_measure_sequence()
+            continue
+        elif cmd in {"multi_load"}:
+            try:
+                DB.multi_load(request[1:])
+            except ValueError:
+                logger.error("異常のある測定ファイルが含まれているため続行不能")
             continue
         elif cmd in {"test"}:
             DB.seq.measure_test()
