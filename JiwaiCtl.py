@@ -563,9 +563,8 @@ class StatusList:
     diff_second: int = 0
 
     def __str__(self):
-        return "{:03} sec ISET= {:+.3f} A\tIOUT= {:+.3f}A\tField= {:+.1f} G\tVOUT= {:+.3f} \tTarget= {:+03}".format(
-            self.diff_second, self.iset, self.iout,
-            self.field, self.vout, self.target)
+        fm = "{:03} sec, ISET= {:>+7.3f} A, IOUT= {:>+7.3f} A, Field= {:>+7.1f} G, VOUT= {:>+7.3f} V, Target= {:>+5}"
+        return fm.format(self.diff_second, self.iset, self.iout, self.field, self.vout, self.target)
 
     def set_origin_time(self, start_time: datetime.datetime) -> None:
         """
