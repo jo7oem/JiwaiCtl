@@ -542,6 +542,7 @@ class SettingDB:
 
         self.seq.cached_sequence = self.cached_seq[self.now_hash]
         self.seq.cached_range = self.cached_range[self.now_hash]
+        self.seq.is_cached = True
         print("測定キャッシュ読み込み完了")
         return
 
