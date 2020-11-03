@@ -243,20 +243,20 @@ class MeasureSetting:  #
     def measure_lock_record(self, target: Union[float, int], pre_lock_time: float, post_lock_time: float,
                             start_time: datetime.datetime, save_file: str = None, mes_range: int = None) -> Current:
         current = None
-        cange_range = False
+        change_range = False
         if not (mes_range is None):
-            cange_range = True
+            change_range = True
             now_range = gauss.range_fetch()
             if mes_range < now_range:
                 gauss.range_set(mes_range)
-                cange_range = False
+                change_range = False
         if self.control_mode == "current" or (self.is_cached and self.use_cache):
             current = Current(target, "mA")
             power.set_iset(current)
         elif self.control_mode == "oectl":
             current = magnet_field_ctl(target, self.autorange)
 
-        if cange_range:
+        if change_range:
             gauss.range_set(mes_range)
 
         time.sleep(pre_lock_time)
@@ -276,11 +276,11 @@ class MeasureSetting:  #
         return
 
     def measure_process(self, measure_seq: List[Union[int, float]], start_time: datetime.datetime,
-                        save_file: str = None, chached_range: Union[List[int]] = None) -> (List[int], List[int]):
+                        save_file: str = None, cached_range: Union[List[int]] = None) -> (List[int], List[int]):
         """
         測定シークエンスに従って測定を実施する
 
-        :param chached_range:
+        :param cached_range:
         :param measure_seq: 測定シークエンス intのリスト
         :param start_time: 測定基準時刻
         :param save_file: ログファイル名
@@ -289,10 +289,10 @@ class MeasureSetting:  #
         res_current: List[int] = []
         res_range: List[int] = []
         pre_block_range = None
-        if chached_range is None:
+        if cached_range is None:
             pass
         else:
-            pre_block_range = chached_range[0]
+            pre_block_range = cached_range[0]
         self.measure_lock_record(measure_seq[0], self.pre_lock_sec, 0, start_time, save_file=save_file,
                                  mes_range=pre_block_range)
         origin_time = datetime.datetime.now()
@@ -317,10 +317,10 @@ class MeasureSetting:  #
         lx = len(measure_seq)
         loop = 0
         for target in measure_seq:
-            if chached_range is None:
+            if cached_range is None:
                 mes_range = None
             else:
-                mes_range = chached_range[loop]
+                mes_range = cached_range[loop]
             c: Current
             loop += 1
             if loop == 1:
@@ -339,10 +339,10 @@ class MeasureSetting:  #
         last_time = post_block_end_time - self.blocking_monitoring_td
 
         post_block_range = None
-        if chached_range is None:
+        if cached_range is None:
             pass
         else:
-            post_block_range = chached_range[-1]
+            post_block_range = cached_range[-1]
         while next_time < last_time:
             while datetime.datetime.now() < next_time:
                 time.sleep(0.2)
@@ -384,7 +384,7 @@ class MeasureSetting:  #
             file = datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S') + ".log"
             file, start_time = gen_csv_header(file)
             if self.use_cache and self.is_cached and self.autorange:
-                self.measure_process(seq, start_time, save_file=file, chached_range=self.cached_range[i])
+                self.measure_process(seq, start_time, save_file=file, cached_range=self.cached_range[i])
 
             else:
                 self.measure_process(seq, start_time, save_file=file)
@@ -422,7 +422,7 @@ class MeasureSetting:  #
             print("測定開始:", start_time.strftime('%Y-%m-%d %H:%M:%S'))
             try:
                 if self.use_cache and self.is_cached and self.autorange:
-                    cache_c, cache_r = self.measure_process(seq, start_time, chached_range=self.cached_range[i])
+                    cache_c, cache_r = self.measure_process(seq, start_time, cached_range=self.cached_range[i])
                 else:
                     cache_c, cache_r = self.measure_process(seq, start_time)
             except ValueError:
