@@ -529,7 +529,7 @@ class SettingDB:
         for p in args:
             print("testing : {0}".format(p))
             self.load_measure_sequence(p)
-            if not self.seq.verified or (self.seq.use_cache and (not self.seq.use_cache)):
+            if not self.seq.verified or (self.seq.use_cache and (not self.seq.is_cached)):
                 self.seq.measure_test()
 
             if not self.seq.verified:
