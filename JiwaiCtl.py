@@ -537,7 +537,7 @@ class SettingDB:
     def load_cache(self):
         if not self.seq.verified:
             return
-        if not (self.now_hash in self.seq.cached_sequence):
+        if not (self.now_hash in self.cached_seq):
             return
 
         self.seq.cached_sequence = self.cached_seq[self.now_hash]
