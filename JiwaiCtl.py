@@ -1131,7 +1131,7 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as e:
-        logger.critical(e)
+        logger.critical(e, exc_info=True)
 
     finally:
         init()
