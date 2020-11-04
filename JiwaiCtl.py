@@ -390,6 +390,7 @@ class MeasureSetting:  #
                 self.measure_process(seq, start_time, save_file=file)
             print("測定完了")
 
+        gauss.range_set(0)
         power.set_iset(Current(0, "mA"))
         return
 
@@ -441,6 +442,7 @@ class MeasureSetting:  #
             self.cached_range = cache_lr
 
         print("測定設定は検証されました。")
+        gauss.range_set(0)
         power.set_iset(Current(0, "mA"))
         return
 
