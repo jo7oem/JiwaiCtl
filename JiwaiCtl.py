@@ -266,7 +266,15 @@ class MeasureSetting:  #
         print(status)
         if save_file:
             save_status(save_file, status)
+
         time.sleep(post_lock_time)
+
+        status = load_status()
+        status.set_origin_time(start_time)
+        status.target = target
+        print(status)
+        if save_file:
+            save_status(save_file, status)
         return current
 
     def remove_cache(self):
