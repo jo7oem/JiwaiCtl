@@ -540,7 +540,7 @@ class SettingDB:
 
             if not self.seq.verified:
                 raise ValueError
-            if (key := self.now_hash) in self.db:
+            if not (key := self.now_hash) in self.db:
                 self.db[key] = True
 
         print("読み込み完了")
