@@ -267,6 +267,8 @@ class MeasureSetting:  #
         if save_file:
             save_status(save_file, status)
 
+        if post_lock_time == 0:
+            return
         time.sleep(post_lock_time)
 
         status = load_status()
