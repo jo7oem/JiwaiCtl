@@ -156,15 +156,14 @@ class MeasureSetting:  #
                 self.have_error = True
 
         if (key := "pre_lock_sec") in seq_dict:
-            minimum = 0.1
             try:
                 val = float(seq_dict[key])
             except ValueError:
                 self.log_invalid_value(key, seq_dict[key], WARNING)
                 self.verified = False
             else:
-                if val < minimum:
-                    self.log_2small_value(key, val, minimum, WARNING)
+                if val < 0:
+                    self.log_2small_value(key, val, 0, WARNING)
                     self.verified = False
                 else:
                     self.pre_lock_sec = val
@@ -172,15 +171,15 @@ class MeasureSetting:  #
             self.log_use_default(key, self.pre_lock_sec)
 
         if (key := "post_lock_sec") in seq_dict:
-            minimum = 0.1
+
             try:
                 val = float(seq_dict[key])
             except ValueError:
                 self.log_invalid_value(key, seq_dict[key], WARNING)
                 self.verified = False
             else:
-                if val < minimum:
-                    self.log_2small_value(key, val, minimum, WARNING)
+                if val < 0:
+                    self.log_2small_value(key, val, 0, WARNING)
                     self.verified = False
                 else:
                     self.post_lock_sec = val
