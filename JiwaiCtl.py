@@ -34,10 +34,10 @@ DB_NAME: Final = "setting.db"
 MEASURE_RECORD_BASE_DIR: Final = "./logs/"
 MEASURE_RECORD_DIR_NAME: Final = datetime.datetime.now().strftime("%Y%m%d")
 MEASURE_RECORD_DIR: Final = os.path.join(os.path.abspath(MEASURE_RECORD_BASE_DIR), MEASURE_RECORD_DIR_NAME)
-BEEP_HZ = 4000
-BEEP_SHORT = 350
+BEEP_HZ = 2000
+BEEP_SHORT = 300
 BEEP_LONG = 1000
-BEEP_DOT = 120
+BEEP_DOT = 100
 
 
 def beep_s():
@@ -415,11 +415,12 @@ class MeasureSetting:  #
             else:
                 self.measure_process(seq, start_time, save_file=file)
             print("測定完了")
-            beep_s()
+            winsound.Beep(BEEP_HZ, BEEP_DOT)
+            time.sleep(BEEP_DOT)
+            winsound.Beep(BEEP_HZ, BEEP_DOT)
 
         gauss.range_set(0)
         power.set_iset(Current(0, "mA"))
-        winsound.Beep(BEEP_HZ, BEEP_LONG)
         return
 
     def measure_test(self) -> None:
@@ -902,8 +903,8 @@ def demag(step: int = 15, field_mode: bool = True):
         x = 1 - (float(i) / float(step))
         nc = flag * max_current * (x ** 2)
         power.set_iset(Current(nc, "mA"))
-        print("!")
         time.sleep(1.0)
+        print("!")
 
     power.set_iset(Current(0, "mA"))
     return
@@ -921,7 +922,9 @@ def demag_cmd(cmd: List[str]) -> None:
     print("消磁開始")
     demag(step, field_mode=True)
     print("消磁終了")
-    winsound.Beep(BEEP_HZ, BEEP_LONG)
+    winsound.Beep(BEEP_HZ, BEEP_DOT)
+    time.sleep(BEEP_DOT / 1000)
+    winsound.Beep(BEEP_HZ, BEEP_DOT)
     return
 
 
@@ -1195,6 +1198,9 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as e:
+        winsound.Beep(BEEP_HZ, BEEP_LONG)
+        beep_s()
+        beep_s()
         logger.critical(e, exc_info=True)
 
     finally:
