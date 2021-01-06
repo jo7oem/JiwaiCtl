@@ -5,6 +5,7 @@ import json
 import os
 import sys
 import time
+import winsound
 from logging import DEBUG, ERROR, WARNING, INFO
 from logging import getLogger, StreamHandler, Formatter, FileHandler
 from typing import Union, List, Dict, Final
@@ -33,6 +34,18 @@ DB_NAME: Final = "setting.db"
 MEASURE_RECORD_BASE_DIR: Final = "./logs/"
 MEASURE_RECORD_DIR_NAME: Final = datetime.datetime.now().strftime("%Y%m%d")
 MEASURE_RECORD_DIR: Final = os.path.join(os.path.abspath(MEASURE_RECORD_BASE_DIR), MEASURE_RECORD_DIR_NAME)
+BEEP_HZ = 4000
+BEEP_SHORT = 350
+BEEP_LONG = 1000
+BEEP_DOT = 120
+
+
+def beep_s():
+    winsound.Beep(BEEP_HZ, BEEP_DOT)
+    time.sleep(BEEP_DOT / 1000)
+    winsound.Beep(BEEP_HZ, BEEP_DOT)
+    time.sleep(BEEP_DOT / 1000)
+    winsound.Beep(BEEP_HZ, BEEP_DOT)
 
 
 class MeasureSetting:  #
@@ -378,6 +391,10 @@ class MeasureSetting:  #
             print("消磁中")
             demag(self.demag_step, oe_mode)
             print("消磁完了")
+            winsound.Beep(BEEP_HZ, BEEP_DOT)
+            time.sleep(BEEP_DOT)
+            winsound.Beep(BEEP_HZ, BEEP_DOT)
+
         if self.use_cache and self.is_cached:
             sequence = self.cached_sequence
         else:
@@ -398,9 +415,11 @@ class MeasureSetting:  #
             else:
                 self.measure_process(seq, start_time, save_file=file)
             print("測定完了")
+            beep_s()
 
         gauss.range_set(0)
         power.set_iset(Current(0, "mA"))
+        winsound.Beep(BEEP_HZ, BEEP_LONG)
         return
 
     def measure_test(self) -> None:
@@ -553,6 +572,7 @@ class SettingDB:
                 self.db[key] = True
 
         print("読み込み完了")
+        winsound.Beep(BEEP_HZ, BEEP_LONG)
         return
 
     def reload_measure_sequence(self):
