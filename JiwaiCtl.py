@@ -897,11 +897,12 @@ def demag(step: int = 15, field_mode: bool = True):
     flag = 1
     max_current = float(max_current)
     for i in range(0, step):
-        print("Step: " + str(i + 1) + "/" + str(step))
+        print("Step: " + str(i + 1) + "/" + str(step) + "...", end="")
         flag = flag * -1
         x = 1 - (float(i) / float(step))
         nc = flag * max_current * (x ** 2)
         power.set_iset(Current(nc, "mA"))
+        print("!")
         time.sleep(1.0)
 
     power.set_iset(Current(0, "mA"))
@@ -920,6 +921,7 @@ def demag_cmd(cmd: List[str]) -> None:
     print("消磁開始")
     demag(step, field_mode=True)
     print("消磁終了")
+    winsound.Beep(BEEP_HZ, BEEP_LONG)
     return
 
 
