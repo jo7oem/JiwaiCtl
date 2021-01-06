@@ -898,7 +898,7 @@ def demag(step: int = 15, field_mode: bool = True):
     flag = 1
     max_current = float(max_current)
     for i in range(0, step):
-        print("Step: " + str(i + 1) + "/" + str(step) + "...", end="")
+        print("Step: " + str(i + 1) + "/" + str(step) + "...", end="", flush=True)
         flag = flag * -1
         x = 1 - (float(i) / float(step))
         nc = flag * max_current * (x ** 2)
