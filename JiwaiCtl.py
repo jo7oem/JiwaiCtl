@@ -849,7 +849,14 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
 
             # 次の設定値を算出
             now_current = power.iset_fetch()
-            next_current = now_current + Current(diff_field * elmg_const, "mA")
+            diff_current = Current(diff_field * elmg_const, "mA")
+            if abs(diff_current) < Current(2, "mA"):
+                if diff_current > 0:
+                    diff_current = Current(1, "mA")
+                else:
+                    diff_current = Current(-1, "mA")
+
+            next_current = now_current + diff_current
             if abs(now_current - next_current) < 1:
                 break
             power.set_iset(next_current)
