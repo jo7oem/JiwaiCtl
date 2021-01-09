@@ -852,13 +852,11 @@ def magnet_field_ctl(target: int, auto_range: bool = False) -> Current:
             diff_current = Current(diff_field * elmg_const, "mA")
             if abs(diff_current) < Current(2, "mA"):
                 if diff_current > 0:
-                    diff_current = Current(1, "mA")
+                    diff_current = Current(2, "mA")
                 else:
-                    diff_current = Current(-1, "mA")
+                    diff_current = Current(-2, "mA")
 
             next_current = now_current + diff_current
-            if abs(now_current - next_current) < 1:
-                break
             power.set_iset(next_current)
 
             continue
