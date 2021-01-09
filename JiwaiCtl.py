@@ -392,7 +392,7 @@ class MeasureSetting:  #
             demag(self.demag_step, oe_mode)
             print("消磁完了")
             winsound.Beep(BEEP_HZ, BEEP_DOT)
-            time.sleep(BEEP_DOT)
+            time.sleep(BEEP_DOT / 1000)
             winsound.Beep(BEEP_HZ, BEEP_DOT)
 
         if self.use_cache and self.is_cached:
@@ -416,7 +416,7 @@ class MeasureSetting:  #
                 self.measure_process(seq, start_time, save_file=file)
             print("測定完了")
             winsound.Beep(BEEP_HZ, BEEP_DOT)
-            time.sleep(BEEP_DOT)
+            time.sleep(BEEP_DOT / 1000)
             winsound.Beep(BEEP_HZ, BEEP_DOT)
 
         gauss.range_set(0)
